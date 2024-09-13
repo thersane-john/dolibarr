@@ -396,7 +396,7 @@ button.btn-low-emphasis{
 
 
 	transition: background 0.8s;/* used for hover ripple effect */
-	background: transparent radial-gradient(circle, transparent 1%, rgba(0, 0, 0, 0.1) 1%, transparent 10%) center/15000%;
+	background: transparent radial-gradient(circle, transparent 1%, hsla(var(--colortextlink-h),var(--colortextlink-s) ,var(--colortextlink-l) , 0.1) 1%, transparent 10%) center/15000%;
 }
 
 button.btn-low-emphasis.--btn-icon{
@@ -408,12 +408,12 @@ button.btn-low-emphasis :is(.fa, .fas){
 	opacity: 0.4;
 }
 
-button.btn-low-emphasis:hover :is(.fa, .fas){
+button.btn-low-emphasis:is(:focus,:hover) :is(.fa, .fas){
 	opacity: 0.8;
 }
 
 button.btn-low-emphasis.--btn-icon:active {
-	background-color:  rgba(0, 0, 0, 0.05);
+	background-color:  hsla(var(--colortextlink-h),var(--colortextlink-s) ,var(--colortextlink-l) , 0.1);
 	background-size: 100%;
 	transition: background 0s;/* used for hover ripple effect */
 }

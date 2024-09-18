@@ -2486,13 +2486,13 @@ function pdf_getLinkedObjects(&$object, $outputlangs)
 	$object->fetchObjectLinked();
 
 	foreach ($object->linkedObjects as $objecttype => $objects) {
-		// SPE TS au cas ou le hook ne marche pas
+		// SPE THERSANE au cas ou le hook ne marche pas
 		$supplierElements = array('supplier_proposal', 'supplier_order', 'order_supplier', 'proposal_supplier');
 		if ( in_array($object->element, $supplierElements) && !in_array($objecttype, $supplierElements)) {
 			// Remove customer element from supplier PDF
 			continue;
 		}
-		// EN SPE TS
+		// END SPE THERSANE
 
 
 		if ($objecttype == 'facture') {

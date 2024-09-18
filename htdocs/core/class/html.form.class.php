@@ -2925,7 +2925,7 @@ class Form
 			$selectFieldsGrouped = ", " . $this->db->ifsql("p.stock IS NULL", 0, "p.stock") . " AS stock";
 		}
 
-		$sql = "SELECT ";
+		$sql = "SELECT DISTINCT ";
 
 		// Add select from hooks
 		$parameters = array();
@@ -5033,7 +5033,7 @@ class Form
 
 		$sql = "SELECT rowid, label, code FROM " . $this->db->prefix() . "c_units";
 		$sql .= ' WHERE active > 0';
-		if (!empty($unit_type)) {
+		if (!empty($unit_type) && getDolGlobalInt('MAIN_UNLOCK_UNIT_TYPE_SELECT')) {
 			$sql .= " AND unit_type = '" . $this->db->escape($unit_type) . "'";
 		}
 		$sql .= " ORDER BY sortorder";

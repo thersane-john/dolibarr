@@ -85,7 +85,7 @@ a.badge-primary:focus, a.badge-primary:hover {
 }
 
 /* SECONDARY */
-.badge-secondary, .tabs .badge {
+.badge-secondary, :where(.tabs .badge)  {
 	color: #fff !important;
 	background-color: <?php print $badgeSecondary; ?>;
 }

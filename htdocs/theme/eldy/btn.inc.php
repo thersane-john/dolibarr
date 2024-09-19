@@ -86,7 +86,7 @@ span.butAction, span.butActionDelete {
 .divButAction
  {
 	text-decoration: none;
-	text-transform: uppercase;
+	text-transform: none;
 	font-weight: bold;
 
 	margin: 0em <?php echo($dol_optimize_smallscreen ? '0.6' : '1'); ?>em;

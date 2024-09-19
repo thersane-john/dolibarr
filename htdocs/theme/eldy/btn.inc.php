@@ -166,7 +166,7 @@ span.butActionNewRefused>span.fa, span.butActionNewRefused>span.fa:hover
 
 .butActionRefused {
 	text-decoration: none !important;
-	text-transform: uppercase;
+	text-transform: none;
 	font-weight: bold !important;
 
 	white-space: nowrap !important;

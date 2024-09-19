@@ -594,7 +594,7 @@ input.pageplusone {
 	color: var(--colortextlink);
 }
 .optiongrey, .opacitymedium {
-	opacity: 0.4;
+	opacity: 0.6;
 }
 .opacitymediumbycolor {
 	color: rgba(0, 0, 0, 0.4);

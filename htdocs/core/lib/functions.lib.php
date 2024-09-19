@@ -3001,7 +3001,7 @@ function dol_banner_tab($object, $paramid, $morehtml = '', $shownav = 1, $fieldi
 	// Add label
 	if (in_array($object->element, array('product', 'bank_account', 'project_task'))) {
 		if (!empty($object->label)) {
-			$morehtmlref .= '<div class="refidno opacitymedium">'.$object->label.'</div>';
+			$morehtmlref .= '<div class="refidno">'.$object->label.'</div>';
 		}
 	}
 	// Show address and email

@@ -398,8 +398,8 @@ class Utils
 			$handle = '';
 
 			// Start call method to execute dump
-			$fullcommandcrypted = $command." ".$paramcrypted." 2>&1";
-			$fullcommandclear = $command." ".$paramclear." 2>&1";
+			$fullcommandcrypted = $command." ".$paramcrypted."|tail +2 2>&1";
+			$fullcommandclear = $command." ".$paramclear."|tail +2 2>&1";
 			if (!$lowmemorydump) {
 				if ($compression == 'none') {
 					$handle = fopen($outputfile, 'w');

@@ -2549,6 +2549,7 @@ function pdf_getLinkedObjects(&$object, $outputlangs)
 					$object->note_public = dol_concatdesc($object->note_public, $outputlangs->transnoentities("RefSending").' :');
 				}
 				// We concat this record info into fields xxx_value. title is overwrote.
+				$refListsTxt = '';
 				foreach ($objects as $elementobject) {
 					if (empty($object->linkedObjects['commande']) && $object->element != 'commande') {    // There is not already a link to order and object is not the order, so we show also info with order
 						$elementobject->fetchObjectLinked(null, '', null, '', 'OR', 1, 'sourcetype', 0);
@@ -2561,14 +2562,16 @@ function pdf_getLinkedObjects(&$object, $outputlangs)
 							}
 						}
 					}
-
+					$refListsTxt.= (!empty($refListsTxt)?' ':'');
 					if (! is_object($order)) {
-						$object->note_public = dol_concatdesc($object->note_public, $outputlangs->transnoentities($elementobject->ref));
+						$refListsTxt.= $outputlangs->transnoentities($elementobject->ref);
 					} else {
-						$object->note_public = dol_concatdesc($object->note_public, $outputlangs->convToOutputCharset($order->ref).($order->ref_client ? ' ('.$order->ref_client.')' : ''));
-						$object->note_public = dol_concatdesc($object->note_public, ' / '.$outputlangs->transnoentities($elementobject->ref));
+						$refListsTxt.= $outputlangs->convToOutputCharset($order->ref).($order->ref_client ? ' ('.$order->ref_client.')' : '');
+						$refListsTxt.= ' / '.$outputlangs->transnoentities($elementobject->ref);
 					}
 				}
+
+				$object->note_public = dol_concatdesc($object->note_public, $refListsTxt);
 			} elseif (count($objects) == 1) {
 				$elementobject = array_shift($objects);
 				$order = null;

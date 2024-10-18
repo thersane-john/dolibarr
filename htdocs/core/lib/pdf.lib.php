@@ -2551,7 +2551,6 @@ function pdf_getLinkedObjects(&$object, $outputlangs)
 					$refListsTxt.=$outputlangs->transnoentities("RefSending").' :';
 				}
 				// We concat this record info into fields xxx_value. title is overwrote.
-				$refListsTxt = '';
 				foreach ($objects as $elementobject) {
 					if (empty($object->linkedObjects['commande']) && $object->element != 'commande') {    // There is not already a link to order and object is not the order, so we show also info with order
 						$elementobject->fetchObjectLinked(null, '', null, '', 'OR', 1, 'sourcetype', 0);

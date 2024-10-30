@@ -1363,7 +1363,7 @@ jQuery(document).ready(function() {
 	// Close drop down
 	jQuery(document).on("click", function(event) {
 		// search if click was outside drop down
-		if (!$(event.target).closest('.dropdown-toggle').length) {
+		if (!$(event.target).closest('.dropdown-toggle,.dropdown').length) {
 			let parentholder = jQuery(".dropdown-toggle").closest(".dropdown.open");
 			if(parentholder){
 				// Hide the menus.

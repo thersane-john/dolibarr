@@ -2625,8 +2625,8 @@ function pdf_getLinkedObjects(&$object, $outputlangs)
 	if (is_object($hookmanager)) {
 		$parameters = array('linkedobjects' => $linkedobjects, 'outputlangs' => $outputlangs);
 		$action = '';
-		$hookmanager->executeHooks('pdf_getLinkedObjects', $parameters, $object, $action); // Note that $action and $object may have been modified by some hooks
-		if (!empty($hookmanager->resArray)) {
+		$reshook = $hookmanager->executeHooks('pdf_getLinkedObjects', $parameters, $object, $action); // Note that $action and $object may have been modified by some hooks
+		if ($reshook>0) {
 			$linkedobjects = $hookmanager->resArray;
 		}
 	}

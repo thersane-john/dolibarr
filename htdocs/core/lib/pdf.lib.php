@@ -814,17 +814,24 @@ function pdf_watermark(&$pdf, $outputlangs, $h, $w, $unit, $text)
 	$watermark_x = $w / 2;
 	$watermark_y = $h / 3;
 	$pdf->SetFont('', 'B', 40);
-	$pdf->SetTextColor(255, 192, 203);
+	$pdf->SetTextColor(255, 0, 0);
 
 	//rotate
 	$pdf->_out(sprintf('q %.5F %.5F %.5F %.5F %.2F %.2F cm 1 0 0 1 %.2F %.2F cm', cos($watermark_angle), sin($watermark_angle), -sin($watermark_angle), cos($watermark_angle), $watermark_x * $k, ($h - $watermark_y) * $k, -$watermark_x * $k, -($h - $watermark_y) * $k));
 	//print watermark
 	$pdf->SetXY($watermark_x_pos, $watermark_y_pos);
+
+	// set alpha to semi-transparency
+	$pdf->SetAlpha(0.3);
 	$pdf->Cell($w - 20, 25, $outputlangs->convToOutputCharset($text), "", 2, "C", 0);
+
 	//antirotate
 	$pdf->_out('Q');
 
 	$pdf->SetXY($savx, $savy);
+
+	// Restore alpha
+	$pdf->SetAlpha(1);
 }
 
 
@@ -1785,7 +1792,6 @@ function pdf_getlinedesc($object, $i, $outputlangs, $hideref = 0, $hidedesc = 0,
 				$dte[] = $outputlangs->transnoentitiesnoconv('printBatch', $detail->batch);
 			}
 			$dte[] = $outputlangs->transnoentitiesnoconv('printQty', $detail->qty);
-
 			// Add also info of planned warehouse for lot
 			if ($object->element == 'shipping' && $detail->fk_origin_stock > 0 && getDolGlobalInt('PRODUCTBATCH_SHOW_WAREHOUSE_ON_SHIPMENT')) {
 				$resproductbatch = $tmpproductbatch->fetch($detail->fk_origin_stock);
@@ -2508,12 +2514,11 @@ function pdf_getLinkedObjects(&$object, $outputlangs)
 	foreach ($object->linkedObjects as $objecttype => $objects) {
 		// SPE THERSANE au cas ou le hook ne marche pas
 		$supplierElements = array('supplier_proposal', 'supplier_order', 'order_supplier', 'proposal_supplier');
-		if ( in_array($object->element, $supplierElements) && !in_array($objecttype, $supplierElements)) {
+		if ( !in_array($object->element, $supplierElements) && in_array($objecttype, $supplierElements)) {
 			// Remove customer element from supplier PDF
 			continue;
 		}
 		// END SPE THERSANE
-
 
 		if ($objecttype == 'facture') {
 			// For invoice, we don't want to have a reference line on document. Image we are using recurring invoice, we will have a line longer than document width.
@@ -2530,10 +2535,12 @@ function pdf_getLinkedObjects(&$object, $outputlangs)
 			$outputlangs->load('orders');
 
 			if (count($objects) > 1 && count($objects) <= (getDolGlobalInt("MAXREFONDOC") ? getDolGlobalInt("MAXREFONDOC") : 10)) {
-				$object->note_public = dol_concatdesc($object->note_public, $outputlangs->transnoentities("RefOrder").' :');
-				foreach ($objects as $elementobject) {
-					$object->note_public = dol_concatdesc($object->note_public, $outputlangs->transnoentities($elementobject->ref).(empty($elementobject->ref_client) ? '' : ' ('.$elementobject->ref_client.')').(empty($elementobject->ref_supplier) ? '' : ' ('.$elementobject->ref_supplier.')').' ');
-					$object->note_public = dol_concatdesc($object->note_public, $outputlangs->transnoentities("OrderDate").' : '.dol_print_date($elementobject->date, 'day', '', $outputlangs));
+				if (empty($object->context['DolPublicNoteAppendedGetLinkedObjects'])) { // Check if already appended before add to avoid repeat data
+					$object->note_public = dol_concatdesc($object->note_public, $outputlangs->transnoentities("RefOrder").' :');
+					foreach ($objects as $elementobject) {
+						$object->note_public = dol_concatdesc($object->note_public, $outputlangs->transnoentities($elementobject->ref).(empty($elementobject->ref_client) ? '' : ' ('.$elementobject->ref_client.')').(empty($elementobject->ref_supplier) ? '' : ' ('.$elementobject->ref_supplier.')').' ');
+						$object->note_public = dol_concatdesc($object->note_public, $outputlangs->transnoentities("OrderDate").' : '.dol_print_date($elementobject->date, 'day', '', $outputlangs));
+					}
 				}
 			} elseif (count($objects) == 1) {
 				$elementobject = array_shift($objects);
@@ -2563,10 +2570,12 @@ function pdf_getLinkedObjects(&$object, $outputlangs)
 
 			if (count($objects) > 1) {
 				$order = null;
+
+				$refListsTxt = '';
 				if (empty($object->linkedObjects['commande']) && $object->element != 'commande') {
-					$object->note_public = dol_concatdesc($object->note_public, $outputlangs->transnoentities("RefOrder").' / '.$outputlangs->transnoentities("RefSending").' :');
+					$refListsTxt.= $outputlangs->transnoentities("RefOrder").' / '.$outputlangs->transnoentities("RefSending").' :';
 				} else {
-					$object->note_public = dol_concatdesc($object->note_public, $outputlangs->transnoentities("RefSending").' :');
+					$refListsTxt.=$outputlangs->transnoentities("RefSending").' :';
 				}
 				// We concat this record info into fields xxx_value. title is overwrote.
 				foreach ($objects as $elementobject) {
@@ -2581,13 +2590,17 @@ function pdf_getLinkedObjects(&$object, $outputlangs)
 							}
 						}
 					}
-
+					$refListsTxt.= (!empty($refListsTxt)?' ':'');
 					if (! is_object($order)) {
-						$object->note_public = dol_concatdesc($object->note_public, $outputlangs->transnoentities($elementobject->ref));
+						$refListsTxt.= $outputlangs->transnoentities($elementobject->ref);
 					} else {
-						$object->note_public = dol_concatdesc($object->note_public, $outputlangs->convToOutputCharset($order->ref).($order->ref_client ? ' ('.$order->ref_client.')' : ''));
-						$object->note_public = dol_concatdesc($object->note_public, ' / '.$outputlangs->transnoentities($elementobject->ref));
+						$refListsTxt.= $outputlangs->convToOutputCharset($order->ref).($order->ref_client ? ' ('.$order->ref_client.')' : '');
+						$refListsTxt.= ' / '.$outputlangs->transnoentities($elementobject->ref);
 					}
+				}
+
+				if (empty($object->context['DolPublicNoteAppendedGetLinkedObjects'])) { // Check if already appended before add to avoid repeat data
+					$object->note_public = dol_concatdesc($object->note_public, $refListsTxt);
 				}
 			} elseif (count($objects) == 1) {
 				$elementobject = array_shift($objects);
@@ -2626,12 +2639,14 @@ function pdf_getLinkedObjects(&$object, $outputlangs)
 		}
 	}
 
+	$object->context['DolPublicNoteAppendedGetLinkedObjects'] = 1;
+
 	// For add external linked objects
 	if (is_object($hookmanager)) {
 		$parameters = array('linkedobjects' => $linkedobjects, 'outputlangs' => $outputlangs);
 		$action = '';
-		$hookmanager->executeHooks('pdf_getLinkedObjects', $parameters, $object, $action); // Note that $action and $object may have been modified by some hooks
-		if (!empty($hookmanager->resArray)) {
+		$reshook = $hookmanager->executeHooks('pdf_getLinkedObjects', $parameters, $object, $action); // Note that $action and $object may have been modified by some hooks
+		if ($reshook>0) {
 			$linkedobjects = $hookmanager->resArray;
 		}
 	}

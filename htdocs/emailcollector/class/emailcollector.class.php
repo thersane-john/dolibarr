@@ -1144,7 +1144,7 @@ class EmailCollector extends CommonObject
 				} else {
 					$keyforprovider = '';
 				}
-				$keyforsupportedoauth2array = preg_replace('/-.*$/', '', $keyforsupportedoauth2array);
+				$keyforsupportedoauth2array = preg_replace('/-.*$/', '', strtoupper($keyforsupportedoauth2array));
 				$keyforsupportedoauth2array = 'OAUTH_'.$keyforsupportedoauth2array.'_NAME';
 
 				if (!empty($supportedoauth2array)) {
@@ -1185,11 +1185,22 @@ class EmailCollector extends CommonObject
 						$serviceFactory = new \OAuth\ServiceFactory();
 						$oauthname = explode('-', $OAUTH_SERVICENAME);
 						// ex service is Google-Emails we need only the first part Google
-						$apiService = $serviceFactory->createService($oauthname[0], $credentials, $storage, array());
+
+						$scopes = array();
+						if (preg_match('/^Microsoft/', $OAUTH_SERVICENAME)) {
+							//$extraparams = $tokenobj->getExtraParams();
+							$tmp = explode('-', $OAUTH_SERVICENAME);
+							$scopes = explode(',', getDolGlobalString('OAUTH_'.strtoupper($tmp[0]).(empty($tmp[1]) ? '' : '-'.$tmp[1]).'_SCOPE'));
+						}
+
+						$apiService = $serviceFactory->createService($oauthname[0], $credentials, $storage, $scopes);
+
 						'@phan-var-force  OAuth\OAuth2\Service\AbstractService|OAuth\OAuth1\Service\AbstractService $apiService'; // createService is only ServiceInterface
-						// We have to save the token because Google give it only once
+
 						$refreshtoken = $tokenobj->getRefreshToken();
 						$tokenobj = $apiService->refreshAccessToken($tokenobj);
+
+						// We have to save the token because answer give it only once
 						$tokenobj->setRefreshToken($refreshtoken);
 						$storage->storeAccessToken($OAUTH_SERVICENAME, $tokenobj);
 					}
@@ -1818,7 +1829,7 @@ class EmailCollector extends CommonObject
 						// Note: we can have
 						// Message-ID=A, In-Reply-To=B, References=B and message can BE an answer or NOT (a transfer rewritten)
 						$isanswer = 0;
-						if (preg_match('/Re\s*:\s+/i', $headers['Subject'])) {
+						if (preg_match('/^(回复|回覆|SV|Antw|VS|RE|Re|AW|Aw|ΑΠ|השב| תשובה | הועבר|Vá|R|RIF|BLS|Atb|RES|Odp|பதில்|YNT|ATB)\s*:\s+/i', $headers['Subject'])) {
 							$isanswer = 1;
 						}
 						//if ($headers['In-Reply-To'] != $headers['Message-ID'] && empty($headers['References'])) $isanswer = 1;	// If in-reply-to differs of message-id, this is a reply
@@ -1887,7 +1898,7 @@ class EmailCollector extends CommonObject
 					if ($imapemail->hasHTMLBody()) {
 						$htmlmsg = $imapemail->getHTMLBody();
 					}
-					if ($imapemail->hasTextBody()) {
+					if ($imapemail->hasTextBody() && $imapemail->getTextBody() != "\n") {
 						$plainmsg = $imapemail->getTextBody();
 					}
 					if ($imapemail->hasAttachments()) {

@@ -731,7 +731,8 @@ class pdf_sponge extends ModelePDFFactures
 
 					if ($this->getColumnStatus('photo')) {
 						// We start with Photo of product line
-						if (isset($imglinesize['width']) && isset($imglinesize['height']) && ($curY + $imglinesize['height']) > ($this->page_hauteur - $this->heightforfooter)) {    // If photo too high, we moved completely on new page
+						$imageTopMargin = 1;
+						if (isset($imglinesize['width']) && isset($imglinesize['height']) && ($curY + $imageTopMargin + $imglinesize['height']) > ($this->page_hauteur - $this->heightforfooter)) {    // If photo too high, we moved completely on new page
 							$pdf->AddPage('', '', true);
 							if (!empty($tplidx)) {
 								$pdf->useTemplate($tplidx);
@@ -739,11 +740,12 @@ class pdf_sponge extends ModelePDFFactures
 							$pdf->setPage($pageposbefore + 1);
 							$pdf->setPageOrientation('', 1, $this->heightforfooter); // The only function to edit the bottom margin of current page to set it.
 							$curY = $this->tab_top_newpage;
+							$showpricebeforepagebreak = 0;
 						}
 
 						$pdf->setPageOrientation('', 0, $this->heightforfooter + $this->heightforfreetext); // The only function to edit the bottom margin of current page to set it.
 						if (!empty($this->cols['photo']) && isset($imglinesize['width']) && isset($imglinesize['height'])) {
-							$pdf->Image($realpatharray[$i], $this->getColumnContentXStart('photo'), $curY + 1, $imglinesize['width'], $imglinesize['height'], '', '', '', 2, 300); // Use 300 dpi
+							$pdf->Image($realpatharray[$i], $this->getColumnContentXStart('photo'), $curY + $imageTopMargin, $imglinesize['width'], $imglinesize['height'], '', '', '', 2, 300); // Use 300 dpi
 							// $pdf->Image does not increase value return by getY, so we save it manually
 							$posYAfterImage = $curY + $imglinesize['height'];
 
@@ -760,13 +762,15 @@ class pdf_sponge extends ModelePDFFactures
 						$this->setAfterColsLinePositionsData('desc', $pdf->GetY(), $pdf->getPage());
 					}
 
+
 					$afterPosData = $this->getMaxAfterColsLinePositionsData();
 					$pdf->setPage($pageposbefore);
 					$pdf->setTopMargin($this->marge_haute);
-					$pdf->setPageOrientation('', 1, 0); // The only function to edit the bottom margin of current page to set it.
+					$curY = $curYBefore;
+					$pdf->setPageOrientation('', 0, $this->heightforfooter); // The only function to edit the bottom margin of current page to set it.
 
 					// We suppose that a too long description or photo were moved completely on next page
-					if ($afterPosData['page'] > $pageposbefore && empty($showpricebeforepagebreak)) {
+					if ($afterPosData['page'] > $pageposbefore && (empty($showpricebeforepagebreak) || ($curY + 4) > ($this->page_hauteur - $this->heightforfooter))) {
 						$pdf->setPage($afterPosData['page']);
 						$curY = $this->tab_top_newpage;
 					}
@@ -2698,7 +2702,7 @@ class pdf_sponge extends ModelePDFFactures
 		$this->cols['totalexcltax'] = array(
 			'rank' => $rank,
 			'width' => 26, // in mm
-			'status' => !getDolGlobalString('PDF_PROPAL_HIDE_PRICE_EXCL_TAX') ? true : false,
+			'status' => !getDolGlobalString('PDF_INVOICE_HIDE_PRICE_EXCL_TAX') ? true : false,
 			'title' => array(
 				'textkey' => 'TotalHTShort'
 			),
@@ -2709,7 +2713,7 @@ class pdf_sponge extends ModelePDFFactures
 		$this->cols['totalincltax'] = array(
 			'rank' => $rank,
 			'width' => 26, // in mm
-			'status' => !getDolGlobalString('PDF_PROPAL_SHOW_PRICE_INCL_TAX') ? false : true,
+			'status' => !getDolGlobalString('PDF_INVOICE_SHOW_PRICE_INCL_TAX') ? false : true,
 			'title' => array(
 				'textkey' => 'TotalTTCShort'
 			),

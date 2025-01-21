@@ -589,7 +589,8 @@ class pdf_cyan extends ModelePDFPropales
 
 					if ($this->getColumnStatus('photo')) {
 						// We start with Photo of product line
-						if (isset($imglinesize['width']) && isset($imglinesize['height']) && ($curY + $imglinesize['height']) > ($this->page_hauteur - $heightforfooter)) {	// If photo too high, we moved completely on new page
+						$imageTopMargin = 1;
+						if (isset($imglinesize['width']) && isset($imglinesize['height']) && ($curY + $imageTopMargin + $imglinesize['height']) > ($this->page_hauteur - $heightforfooter)) {	// If photo too high, we moved completely on new page
 							$pdf->AddPage('', '', true);
 							if (!empty($tplidx)) {
 								$pdf->useTemplate($tplidx);
@@ -597,11 +598,12 @@ class pdf_cyan extends ModelePDFPropales
 							$pdf->setPage($pageposbefore + 1);
 							$pdf->setPageOrientation('', 1, $heightforfooter); // The only function to edit the bottom margin of current page to set it.
 							$curY = $tab_top_newpage;
+							$showpricebeforepagebreak = 0;
 						}
 
 						$pdf->setPageOrientation('', 0, $heightforfooter + $heightforfreetext); // The only function to edit the bottom margin of current page to set it.
 						if (!empty($this->cols['photo']) && isset($imglinesize['width']) && isset($imglinesize['height'])) {
-							$pdf->Image($realpatharray[$i], $this->getColumnContentXStart('photo'), $curY + 1, $imglinesize['width'], $imglinesize['height'], '', '', '', 2, 300); // Use 300 dpi
+							$pdf->Image($realpatharray[$i], $this->getColumnContentXStart('photo'), $curY + $imageTopMargin, $imglinesize['width'], $imglinesize['height'], '', '', '', 2, 300); // Use 300 dpi
 							// $pdf->Image does not increase value return by getY, so we save it manually
 							$posYAfterImage = $curY + $imglinesize['height'];
 
@@ -620,11 +622,12 @@ class pdf_cyan extends ModelePDFPropales
 					$afterPosData = $this->getMaxAfterColsLinePositionsData();
 					$pdf->setPage($pageposbefore);
 					$pdf->setTopMargin($this->marge_haute);
-					//                  $pdf->setPageOrientation('', 1, 0); // The only function to edit the bottom margin of current page to set it.
+					$curY = $curYBefore;
+					$pdf->setPageOrientation('', 0, $heightforfooter); // The only function to edit the bottom margin of current page to set it.
 
 
 					// We suppose that a too long description or photo were moved completely on next page
-					if ($afterPosData['page'] > $pageposbefore && empty($showpricebeforepagebreak)) {
+					if ($afterPosData['page'] > $pageposbefore && (empty($showpricebeforepagebreak) || ($curY + 4) > ($this->page_hauteur - $heightforfooter))) {
 						$pdf->setPage($afterPosData['page']);
 						$curY = $tab_top_newpage;
 					}
@@ -1846,7 +1849,7 @@ class pdf_cyan extends ModelePDFPropales
 		$pdf->SetFont('', '', $default_font_size - 2);
 		$pdf->MultiCell($largcol, $tab_hl, $outputlangs->transnoentities("ProposalCustomerSignature"), 0, 'L', 1);
 
-		$pdf->SetXY($posx, $tab_top + $tab_hl);
+		$pdf->SetXY($posx, $tab_top + $tab_hl + 3);
 		$pdf->MultiCell($largcol, $tab_hl * 3, '', 1, 'R');
 
 		if (getDolGlobalString('MAIN_PDF_PROPAL_USE_ELECTRONIC_SIGNING')) {

@@ -710,8 +710,14 @@ if (empty($reshook)) {
 			$db->rollback();
 
 			$action = 'create';
-			$_GET["origin"] = $_POST["origin"];		// Keep GET and POST here ?
-			$_GET["originid"] = $_POST["originid"]; // Keep GET and POST here ?
+			if (isset($_POST["origin"])) {
+				$_GET["origin"]=$_POST["origin"];
+			}
+
+			if (isset($_POST["originid"])) {
+				$_GET["originid"] = $_POST["originid"];
+			}
+
 			if (!empty($errors)) {
 				setEventMessages(null, $errors, 'errors');
 			} else {
@@ -1050,8 +1056,8 @@ if ($search_fk_input_reason > 0) {
 if ($search_user > 0) {
 	$sql .= " AND EXISTS (";
 	$sql .= " SELECT ec.fk_c_type_contact, ec.element_id, ec.fk_socpeople";
-	$sql .= " FROM llx_element_contact as ec";
-	$sql .= " INNER JOIN  llx_c_type_contact as tc";
+	$sql .= " FROM ".MAIN_DB_PREFIX."element_contact as ec";
+	$sql .= " INNER JOIN  ".MAIN_DB_PREFIX."c_type_contact as tc";
 	$sql .= " ON ec.fk_c_type_contact = tc.rowid AND tc.element='commande' AND tc.source='internal'";
 	$sql .= " WHERE ec.element_id = c.rowid AND ec.fk_socpeople = ".((int) $search_user).")";
 }
@@ -2212,7 +2218,15 @@ while ($i < $imaxinloop) {
 		// Ref
 		if (!empty($arrayfields['c.ref']['checked'])) {
 			print '<td class="nowraponall">';
-			print $generic_commande->getNomUrl(1, ($search_status != 2 ? 0 : $obj->fk_statut), 0, 0, 0, 1, 1);
+			$getNomUrlOption = $search_status != 2 ? 0 : $obj->fk_statut;
+			if (getDolGlobalInt('MAIN_LIST_ORDER_LINK_DONT_USE_STATUS')) {
+				// TODO : This hidden conf must be added to the user's individual conf.
+				//  The user must be able to manage this behavior to adapt it to his use of the software, because depending on the employee's workstation, his use differs.
+				//  This hidden configuration ensures that users are not confused by keeping the same behavior of click, whatever the current filter.
+				//  If the aim is to use a different url when the filter is applied via the link in the left-hand menu, then this detection should be adapted instead.
+				$getNomUrlOption = '';
+			}
+			print $generic_commande->getNomUrl(1, $getNomUrlOption, 0, 0, 0, 1, 1);
 
 			$filename = dol_sanitizeFileName($obj->ref);
 			$filedir = $conf->commande->multidir_output[$conf->entity].'/'.dol_sanitizeFileName($obj->ref);
@@ -2720,7 +2734,7 @@ while ($i < $imaxinloop) {
 								$productstat_cachevirtual[$generic_commande->lines[$lig]->fk_product]['stock_reel'] = $generic_product->stock_theorique;
 							} else {
 								$generic_product->stock_reel = $productstat_cache[$generic_commande->lines[$lig]->fk_product]['stock_reel'];
-								$generic_product->stock_theorique = $productstat_cachevirtual[$generic_commande->lines[$lig]->fk_product]['stock_reel'] = $generic_product->stock_theorique;
+								$generic_product->stock_theorique = $productstat_cachevirtual[$generic_commande->lines[$lig]->fk_product]['stock_reel'];
 							}
 
 							if ($reliquat > $generic_product->stock_reel) {

@@ -400,6 +400,7 @@ if (empty($reshook)) {
 					$societe = new Societe($db);
 					$societe->fetch($cmd->socid);
 					$objecttmp->vat_reverse_charge = $societe->vat_reverse_charge;
+					$objecttmp->thirdparty = $societe;
 				}
 				$objecttmp->socid = $cmd->socid;
 				$objecttmp->type = $objecttmp::TYPE_STANDARD;
@@ -407,7 +408,11 @@ if (empty($reshook)) {
 				$objecttmp->mode_reglement_id	= $cmd->mode_reglement_id;
 				$objecttmp->fk_project = $cmd->fk_project;
 				$objecttmp->multicurrency_code = $cmd->multicurrency_code;
-				$objecttmp->ref_supplier = !empty($cmd->ref_supplier) ? $cmd->ref_supplier : $default_ref_supplier;
+
+				// SPE THERSANE
+				$objecttmp->ref_supplier = '';//!empty($cmd->ref_supplier) ? $cmd->ref_supplier : $default_ref_supplier;
+				// FIN SPE THERSANE
+
 				$default_ref_supplier += 1;
 
 				$datefacture = dol_mktime(12, 0, 0, GETPOSTINT('remonth'), GETPOSTINT('reday'), GETPOSTINT('reyear'));
@@ -418,6 +423,12 @@ if (empty($reshook)) {
 				$objecttmp->date = $datefacture;
 				$objecttmp->origin    = 'order_supplier';
 				$objecttmp->origin_id = $id_order;
+
+				// SPE THERSANE
+				if (!empty($objecttmp->cond_reglement_id)) {
+					$objecttmp->date_echeance = $objecttmp->calculate_date_lim_reglement();
+				}
+				// FIN SPE THERSANE
 
 				$res = $objecttmp->create($user);
 
@@ -508,10 +519,16 @@ if (empty($reshook)) {
 							if (($lines[$i]->product_type != 9 && empty($lines[$i]->fk_parent_line)) || $lines[$i]->product_type == 9) {
 								$fk_parent_line = 0;
 							}
+
+							$tva_tx = $lines[$i]->tva_tx;
+							if (!empty($lines[$i]->vat_src_code) && !preg_match('/\(/', $tva_tx)) {
+								$tva_tx .= ' ('.$lines[$i]->vat_src_code.')';
+							}
+
 							$result = $objecttmp->addline(
 								$desc,
 								$lines[$i]->subprice,
-								$lines[$i]->tva_tx,
+								$tva_tx,
 								$lines[$i]->localtax1_tx,
 								$lines[$i]->localtax2_tx,
 								$lines[$i]->qty,

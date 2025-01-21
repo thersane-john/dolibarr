@@ -8,7 +8,9 @@
  * Copyright (C) 2015       Marcos García       <marcosgdf@gmail.com>
  * Copyright (C) 2017       Ferran Marcet       <fmarcet@2byte.es>
  * Copyright (C) 2018-2024  Frédéric France     <frederic.france@free.fr>
- * Copyright (C) 2024		MDW							<mdeweerd@users.noreply.github.com>
+ * Copyright (C) 2024		MDW					<mdeweerd@users.noreply.github.com>
+ * Copyright (C) 2024	    Nick Fragoulis
+ * Copyright (C) 2024       Joachim Kueter       <git-jk@bloxera.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -577,7 +579,8 @@ class pdf_eratosthene extends ModelePDFCommandes
 
 					if ($this->getColumnStatus('photo')) {
 						// We start with Photo of product line
-						if (isset($imglinesize['width']) && isset($imglinesize['height']) && ($curY + $imglinesize['height']) > ($this->page_hauteur - $heightforfooter)) {	// If photo too high, we moved completely on new page
+						$imageTopMargin = 1;
+						if (isset($imglinesize['width']) && isset($imglinesize['height']) && ($curY + $imageTopMargin + $imglinesize['height']) > ($this->page_hauteur - $heightforfooter)) {	// If photo too high, we moved completely on new page
 							$pdf->AddPage('', '', true);
 							if (!empty($tplidx)) {
 								$pdf->useTemplate($tplidx);
@@ -585,13 +588,14 @@ class pdf_eratosthene extends ModelePDFCommandes
 							$pdf->setPage($pageposbefore + 1);
 							$pdf->setPageOrientation('', 1, $heightforfooter); // The only function to edit the bottom margin of current page to set it.
 							$curY = $tab_top_newpage;
+							$showpricebeforepagebreak = 0;
 						}
 
 						// I remove the line commented below because it probably uselesss (or bug source) no need to change bottom margin because we have checked image fit
 						//$pdf->setPageOrientation('', 0, $heightforfooter + $heightforfreetext); // The only function to edit the bottom margin of current page to set it.
 
 						if (!empty($this->cols['photo']) && isset($imglinesize['width']) && isset($imglinesize['height'])) {
-							$pdf->Image($realpatharray[$i], $this->getColumnContentXStart('photo'), $curY + 1, $imglinesize['width'], $imglinesize['height'], '', '', '', 2, 300); // Use 300 dpi
+							$pdf->Image($realpatharray[$i], $this->getColumnContentXStart('photo'), $curY + $imageTopMargin, $imglinesize['width'], $imglinesize['height'], '', '', '', 2, 300); // Use 300 dpi
 							// $pdf->Image does not increase value return by getY, so we save it manually
 							$posYAfterImage = $curY + $imglinesize['height'];
 							$this->setAfterColsLinePositionsData('photo', $posYAfterImage, $pdf->getPage());
@@ -610,9 +614,10 @@ class pdf_eratosthene extends ModelePDFCommandes
 					$afterPosData = $this->getMaxAfterColsLinePositionsData();
 					$pdf->setPage($pageposbefore);
 					$pdf->setTopMargin($this->marge_haute);
+					$pdf->setPageOrientation('', 0, $heightforfooter); // The only function to edit the bottom margin of current page to set it.
 
 					// We suppose that a too long description or photo were moved completely on next page
-					if ($afterPosData['page'] > $pageposbefore && empty($showpricebeforepagebreak)) {
+					if ($afterPosData['page'] > $pageposbefore && (empty($showpricebeforepagebreak) || ($curY + 4) > ($this->page_hauteur - $heightforfooter))) {
 						$pdf->setPage($afterPosData['page']);
 						$curY = $tab_top_newpage;
 					}
@@ -710,7 +715,7 @@ class pdf_eratosthene extends ModelePDFCommandes
 
 					// Retrieve type from database for backward compatibility with old records
 					if ((!isset($localtax1_type) || $localtax1_type == '' || !isset($localtax2_type) || $localtax2_type == '') // if tax type not defined
-					&& (!empty($localtax1_rate) || !empty($localtax2_rate))) { // and there is local tax
+						&& (!empty($localtax1_rate) || !empty($localtax2_rate))) { // and there is local tax
 						$localtaxtmp_array = getLocalTaxesFromRate($vatrate, 0, $object->thirdparty, $mysoc);
 						$localtax1_type = isset($localtaxtmp_array[0]) ? $localtaxtmp_array[0] : '';
 						$localtax2_type = isset($localtaxtmp_array[2]) ? $localtaxtmp_array[2] : '';
@@ -1838,7 +1843,7 @@ class pdf_eratosthene extends ModelePDFCommandes
 			'border-left' => true, // add left line separator
 		);
 
-		if (!getDolGlobalInt('MAIN_GENERATE_DOCUMENTS_WITHOUT_VAT')) {
+		if (!getDolGlobalInt('MAIN_GENERATE_DOCUMENTS_WITHOUT_VAT') && !getDolGlobalString('MAIN_GENERATE_DOCUMENTS_WITHOUT_VAT_COLUMN')) {
 			$this->cols['vat']['status'] = true;
 		}
 

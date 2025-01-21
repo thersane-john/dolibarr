@@ -1816,7 +1816,7 @@ function pdf_getlinedesc($object, $i, $outputlangs, $hideref = 0, $hidedesc = 0,
 	$stringColor = [
 		'316L' => '#ad0000',
 		'F316L' => '#ad0000',
-		'304L' => '#76ad00',
+		'304L' => '#1aad00',
 		'P265GH' => '#f57d05',
 		'P280GH' => '#f57d05',
 		'A105' => '#f57d05',

@@ -12520,7 +12520,7 @@ function dolGetButtonAction($label, $text = '', $actionType = 'default', $url = 
 	}
 
 	// escape all attribute
-	$attr = array_map('dol_escape_htmltag', $attr);
+	$attr = array_map('dol_htmlentities', $attr);
 
 	$TCompiledAttr = array();
 	foreach ($attr as $key => $value) {

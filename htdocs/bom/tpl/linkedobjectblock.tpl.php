@@ -47,7 +47,7 @@ foreach ($linkedObjectBlock as $key => $objectlink) {
 		$trclass .= ' liste_sub_total';
 	}
 	echo '<tr class="'.$trclass.'" >';
-	echo '<td class="linkedcol-element tdoverflowmax100">'.$langs->trans("Bom");
+	echo '<td class="linkedcol-element">'.$langs->trans("Bom");
 	if (!empty($showImportButton) && $conf->global->MAIN_ENABLE_IMPORT_LINKED_OBJECT_LINES) {
 		print '<a class="objectlinked_importbtn" href="'.$objectlink->getNomUrl(0, '', 0, 1).'&amp;action=selectlines&amp;token='.newToken().'" data-element="'.$objectlink->element.'" data-id="'.$objectlink->id.'"  > <i class="fa fa-indent"></i> </a';
 	}

@@ -11371,7 +11371,12 @@ function natural_search($fields, $value, $mode = 0, $nofirstand = 0)
 
 	$value = preg_replace('/\s*\|\s*/', '|', $value);
 
-	$crits = explode(' ', $value);
+	//natural mode search type 3 allow spaces into search ...
+	if ($mode == 3 || $mode == -3) {
+		$crits = explode(',', $value);
+	} else {
+		$crits = explode(' ', $value);
+	}
 	$res = '';
 	if (!is_array($fields)) {
 		$fields = array($fields);
@@ -11432,7 +11437,7 @@ function natural_search($fields, $value, $mode = 0, $nofirstand = 0)
 							$listofcodes .= "'".$db->escape($val)."'";
 						}
 					}
-					$newres .= ($i2 > 0 ? ' OR ' : '').$field." ".($mode == -3 ? 'NOT ' : '')."IN (".$db->sanitize($listofcodes, 1).")";
+					$newres .= ($i2 > 0 ? ' OR ' : '').$field." ".($mode == -3 ? 'NOT ' : '')."IN (".$db->sanitize($listofcodes, 1, 0, 1).")";
 					$i2++; // a criteria for 1 more field was added to string
 				}
 				if ($mode == -3) {
@@ -12344,6 +12349,7 @@ function dolGetStatus($statusLabel = '', $statusLabelShort = '', $html = '', $st
  *                                      'xxxxx' => '', // your xxxxx attribute you want
  *                                      'class' => 'reposition', // to add more css class to the button class attribute
  *                                      'classOverride' => '' // to replace class attribute of the button
+ *                                      'use_unsecured_unescapedattr' => [] | bool // on true will use unsecured fonction to escape all attributes, if use array it will use unsecured fonction to escape attribute key present in this array
  *                                      ],
  *                                      'confirm' => [
  *                                      'url' => 'http://', // Override Url to go when user click on action btn, if empty default url is $url.?confirm=yes, for no js compatibility use $url for fallback confirm.
@@ -12519,8 +12525,22 @@ function dolGetButtonAction($label, $text = '', $actionType = 'default', $url = 
 		unset($attr['href']);
 	}
 
-	// escape all attribute
-	$attr = array_map('dol_htmlentities', $attr);
+	// Escape all attributes
+	if (!empty($params['use_unsecured_unescapedattr'])) {	// Not recommended.
+		if (is_array($params['use_unsecured_unescapedattr'])) {
+			foreach ($attr as $attrK => $attrV) {
+				if (in_array($attrK, $params['use_unsecured_unescapedattr'])) {
+					$attr[$attrK] = dol_htmlentities($attrV, ENT_QUOTES | ENT_SUBSTITUTE);
+				} else {
+					$attr[$attrK] = dolPrintHTMLForAttribute($attrV);
+				}
+			}
+		} else {
+			$attr = array_map('dol_htmlentities', $attr);
+		}
+	} else {
+		$attr = array_map('dolPrintHTMLForAttribute', $attr);
+	}
 
 	$TCompiledAttr = array();
 	foreach ($attr as $key => $value) {

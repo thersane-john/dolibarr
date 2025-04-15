@@ -68,7 +68,10 @@ $search_amount = GETPOST('search_amount', 'alpha'); // alpha because we must be 
 $search_company = GETPOST('search_company', 'alpha');
 $search_payment_num = GETPOST('search_payment_num', 'alpha');
 
-$displayAllInvoices = GETPOSTINT('display-all-invoices', getDolGlobalInt('MAIN_PAIMENTS_SHOW_ALL_INVOICE_TYPES', 0));
+$displayAllInvoices = getDolGlobalInt('MAIN_PAIMENTS_SHOW_ALL_INVOICE_TYPES', 0);
+if (GETPOSTISSET('display-all-invoices')) {
+	$displayAllInvoices = GETPOSTINT('display-all-invoices');
+}
 
 $limit = GETPOSTINT('limit') ? GETPOST('limit') : $conf->liste_limit;
 $sortfield = GETPOST('sortfield', 'aZ09comma');

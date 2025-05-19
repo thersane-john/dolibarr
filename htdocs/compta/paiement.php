@@ -599,18 +599,18 @@ if ($action == 'create' || $action == 'confirm_paiement' || $action == 'add_paie
 			$totalnboflines = $num = $db->num_rows($resql);
 			if ($num > 0) {
 				$arraytitle = $langs->trans('Invoice');
-				if ($facture->type == 2) {
+				if ($facture->type == Facture::TYPE_CREDIT_NOTE) {
 					$arraytitle = $langs->trans("CreditNotes");
 				}
 				$alreadypayedlabel = $langs->trans('Received');
 				$multicurrencyalreadypayedlabel = $langs->trans('MulticurrencyReceived');
-				if ($facture->type == 2) {
+				if ($facture->type == Facture::TYPE_CREDIT_NOTE) {
 					$alreadypayedlabel = $langs->trans("PaidBack");
 					$multicurrencyalreadypayedlabel = $langs->trans("MulticurrencyPaidBack");
 				}
 				$remaindertopay = $langs->trans('RemainderToTake');
 				$multicurrencyremaindertopay = $langs->trans('MulticurrencyRemainderToTake');
-				if ($facture->type == 2) {
+				if ($facture->type == Facture::TYPE_CREDIT_NOTE) {
 					$remaindertopay = $langs->trans("RemainderToPayBack");
 					$multicurrencyremaindertopay = $langs->trans("MulticurrencyRemainderToPayBack");
 				}
@@ -642,7 +642,8 @@ if ($action == 'create' || $action == 'confirm_paiement' || $action == 'add_paie
 				print_barre_liste($langs->trans('Invoices'), 0, $_SERVER["PHP_SELF"], '', '', '', '', $num, $totalnboflines, 'bill', 0, $moreHtmlRight, '', 0, 0, 0, 1);
 
 				print '<div class="div-table-responsive-no-min">'; // You can use div-table-responsive-no-min if you don't need reserved height for your table
-				print '<table class="noborder centpercent">';
+				print '<table id="customer-invoices-paiments-list" class="noborder centpercent" data-display-all-invoices="' . (int) $displayAllInvoices . '" >';
+				print '<thead>';
 
 				print '<tr class="liste_titre">';
 				print '<td>'.$arraytitle.'</td>';
@@ -668,12 +669,13 @@ if ($action == 'create' || $action == 'confirm_paiement' || $action == 'add_paie
 
 				print '<td align="right">&nbsp;</td>';
 				print "</tr>\n";
-
+				print '</thead>';
 				$total_ttc = 0;
 				$totalrecu = 0;
 				$totalrecucreditnote = 0;
 				$totalrecudeposits = 0;
 
+				print '<tbody>';
 				while ($i < $num) {
 					$objp = $db->fetch_object($resql);
 
@@ -711,7 +713,7 @@ if ($action == 'create' || $action == 'confirm_paiement' || $action == 'add_paie
 					$tootltiponfullamount .= $langs->trans('AmountVAT') . ": " . price($objp->total_tva, 0, $langs, 0, -1, -1, $conf->currency) . "<br>";
 					$tootltiponfullamount .= $langs->trans('AmountTTC') . ": " . price($objp->total_ttc, 0, $langs, 0, -1, -1, $conf->currency) . "<br>";
 
-					print '<tr class="oddeven'.(($invoice->id == $facid) ? ' highlight' : '').'">';
+					print '<tr data-row-type="'.$objp->type.'" class="oddeven'.(($invoice->id == $facid) ? ' highlight' : '').'">';
 
 					print '<td class="nowraponall">';
 					print $invoice->getNomUrl(1, '');
@@ -900,6 +902,7 @@ if ($action == 'create' || $action == 'confirm_paiement' || $action == 'add_paie
 					$totalrecudeposits += $deposits;
 					$i++;
 				}
+				print '</tbody>';
 
 				if ($i > 1) {
 					$colspan = 3;
@@ -910,6 +913,8 @@ if ($action == 'create' || $action == 'confirm_paiement' || $action == 'add_paie
 					}
 
 					// Print total
+
+					print '<tfoot>';
 					print '<tr class="liste_total">';
 					print '<td colspan="'.$colspan.'" class="left">'.$langs->trans('TotalTTC').'</td>';
 					if (isModEnabled('multicurrency')) {
@@ -932,6 +937,7 @@ if ($action == 'create' || $action == 'confirm_paiement' || $action == 'add_paie
 					print '<td class="right" id="result" style="font-weight: bold;"></td>'; // Autofilled
 					print '<td align="center">&nbsp;</td>';
 					print "</tr>\n";
+					print '</tfoot>';
 				}
 				print "</table>";
 				print "</div>\n";

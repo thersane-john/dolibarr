@@ -2045,7 +2045,7 @@ if ($action == 'create') {
 		// Source / Channel - What trigger creation
 		print '<tr class="field_demand_reason_id"><td class="titlefieldcreate">'.$langs->trans('Source').'</td><td class="valuefieldcreate">';
 		print img_picto('', 'question', 'class="pictofixedwidth"');
-		$form->selectInputReason((GETPOSTISSET('demand_reason_id') ? GETPOSTINT('demand_reason_id') : ''), 'demand_reason_id', "SRC_PROP", 1, 'maxwidth200 widthcentpercentminusx');
+		$form->selectInputReason((GETPOSTINT('demand_reason_id') ? GETPOSTINT('demand_reason_id') : ''), 'demand_reason_id', "SRC_PROP", 1, 'maxwidth200 widthcentpercentminusx');
 		print '</td></tr>';
 
 		// Shipping Method

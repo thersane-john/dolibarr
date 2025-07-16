@@ -1,0 +1,141 @@
+:root{
+	--color: hsl(202deg 13.67% 41.54%);
+	--font-weight-medium: 300;
+}
+
+/*body > nav {*/
+/*	backdrop-filter: blur(5px) !important;;*/
+/*	background-color: rgb(255 255 255 / 66%) !important;*/
+/*}*/
+
+a,
+[role=link] {
+	--color: #297db1;
+
+}
+
+.nav-item.--cart {
+	background-color: #f3f3f3;
+}
+
+nav a, nav  [role=link] {
+	--color : hsl(202deg 13.67% 41.54%);
+}
+
+nav a:is([aria-current], :hover, :active, :focus), [role=link]:is([aria-current], :hover, :active, :focus) {
+	--color: hsl(289.08deg 90% 32%);
+}
+
+nav  a:focus, nav  [role=link]:focus {
+	--background-color: hsl(274.15deg 97% 59% / 12.5%);
+}
+
+
+.primary-top-nav .logout {
+	margin-left: auto;
+}
+
+
+
+/** FOOTER **/
+.main-footer {
+	border: 2px ;
+	background-color: #fbfbfb;
+	--color: #607597;
+	color: var(--color);
+	padding-top: 8px ;
+}
+
+.main-footer h3{
+	--h3-color: var(--color);
+	font-weight: lighter;
+}
+
+.footer-separator {
+	height: 2px;
+	opacity: 0.3;
+	margin-bottom: 32px;
+	background: linear-gradient(
+			90deg,
+			rgba(255, 0, 0, 1) 0%,
+			rgba(255, 154, 0, 1) 10%,
+			rgba(208, 222, 33, 1) 20%,
+			rgba(79, 220, 74, 1) 30%,
+			rgba(63, 218, 216, 1) 40%,
+			rgba(47, 201, 226, 1) 50%,
+			rgba(28, 127, 238, 1) 60%,
+			rgba(95, 21, 242, 1) 70%,
+			rgba(186, 12, 248, 1) 80%,
+			rgba(251, 7, 217, 1) 90%,
+			rgba(255, 0, 0, 1) 100%
+	);
+}
+
+.home-container{
+	min-height: 560px;
+}
+
+.no-bullets li {
+	list-style: none;
+}
+
+@media (min-width: 1500px) {
+	.container {
+		max-width: 1500px;
+	}
+}
+
+@media (min-width: 1200px) {
+	.container {
+		max-width: 90%;
+	}
+}
+
+table.striped tr:hover td {
+	background-color: rgba(255, 224, 0, 0.23);
+	--color: #000;
+}
+table.striped tr:hover td a {
+	--color: #00578d;
+}
+
+.col-prix-adhere, .col-cmd-reste{
+	background-color: #0088ff0d;
+}
+table.striped tr:hover td:is(.col-prix-adhere, .col-cmd-reste){
+	/*background-color: rgba(8, 255, 0, 0.04);*/
+}
+thead th {
+	font-size: 0.9em;
+	font-weight: 700;
+}
+
+
+[role="search-row"] input:not([type=checkbox], [type=radio], [type=range]){
+	--line-height : 0.8rem;
+	--form-element-spacing-vertical : 0.2rem;
+}
+
+[role="search-row"] select {
+	--line-height : 1rem;
+	--form-element-spacing-vertical : 0.3rem;
+}
+[data-col="row-checkbox"] {
+	text-align: center;
+}
+
+.text-center {
+	text-align: center;
+}
+.text-right {
+	text-align: right;
+}
+
+.btn-filter-icon {
+	vertical-align: middle;
+}
+
+
+[data-controller="default"] .hero-header {
+	padding: 90px 0 32px 0;
+}

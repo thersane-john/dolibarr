@@ -45,6 +45,10 @@ if (getDolGlobalString('WEBPORTAL_CUSTOM_CSS')) {
 //$jNotifyJSUrl = dol_buildpath('/includes/jquery/plugins/jnotify/jquery.jnotify.js', 2);
 //$head .= '<script src="'.$jNotifyJSUrl.'"></script>'."\n";
 
+if (!defined('DISABLE_CSS_DEFAULT_THEME')) {
+	define('DISABLE_CSS_DEFAULT_THEME', true);
+}
+
 top_htmlhead($head, $title);
 ?>
 <body

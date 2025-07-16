@@ -62,6 +62,10 @@ if (empty($dolibarr_nocache)) {
 @import "pico.css.php";
 @import "mixin.css";
 @import "login.css";
+@import "badges.css";
+@import "flex-box-grid.css";
+@import "title-buttons.css";
+@import "for-test.css";
 
 /**
 This file car overwrite default pico css

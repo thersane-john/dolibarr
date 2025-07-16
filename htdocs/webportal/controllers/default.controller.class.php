@@ -57,6 +57,12 @@ class DefaultController extends Controller
 		if (empty($hookRes)) {
 			$context->title = $langs->trans('WebPortalHomeTitle');
 			$context->desc = $langs->trans('WebPortalHomeDesc');
+
+
+
+			$context->title = 'Reliquats des commandes';
+			$context->title = 'Liste des articles';
+			$context->desc = ''; //$langs->trans('WebPortalHomeDesc');
 			//$context->doNotDisplayHeaderBar=1;// hide default header
 		}
 

@@ -202,6 +202,16 @@ if (empty($reshook)) {
 		</li>
 	</ul>
 	<ul class="menu-entries">
+
+		<li data-deep="0" class="nav-item"><a href="#">Accueil</a></li>
+		<li data-deep="0" class="nav-item"><a href="#">Commandes</a></li>
+		<li data-deep="0" class="nav-item"><a href="#">Reliquats</a></li>
+		<li data-deep="0" class="nav-item"><a href="#">Boîte aux lettres</a></li>
+		<li data-deep="0" class="nav-item"><a href="#">Produits</a></li>
+		<li data-deep="0" class="nav-item"><a href="#">Adhérants</a></li>
+		<li data-deep="0" class="nav-item"><a href="#">Fournisseurs</a></li>
+		<li data-deep="0" class="nav-item"><a href="#">Tarifs</a></li>
+
 	<?php
 	if (empty($context->doNotDisplayMenu) && empty($reshook) && !empty($navMenu)) {
 		// show menu
@@ -216,6 +226,10 @@ if (empty($reshook)) {
 	?>
 	</ul>
 	<ul class="logout">
+
+		<li data-deep="0" class="nav-item"><img style="max-height: 24px" src="http://localhost/thersane/easyA%20project/icons/user.svg"/> M. Yannick DIDIER</li>
+		<li data-deep="0" class="nav-item --cart  "><img style="max-height: 24px" src="http://localhost/thersane/easyA%20project/icons/cart.svg"/> Panier <span class="badge --cart">10</span></li>
+
 	<?php
 	if (empty($context->doNotDisplayMenu) && empty($reshook) && !empty($navUserMenu)) {
 		// show menu

@@ -11,6 +11,54 @@ if (empty($context) || !is_object($context)) {
 
 global $langs;
 
+if ($context->controller != 'login') :
+	?>
+
+<footer class="main-footer">
+	<div class="footer-separator" ></div>
+	<div class="container">
+		<div class="row">
+			<div class="col-xs-2">
+				<img class="brand__logo-img" style="max-height: 192px; filter: grayscale(100%); opacity: 0.7 " src="http://localhost/thersane/easyA%20project/GAFIC-seul.png" alt="THERSANE">
+			</div>
+			<div class="col-xs-5">
+				<h3 class="widgettitle">Nos coordonnées</h3>
+
+				<div class="row">
+					<div class="col-xs-6">
+						<b>GAFIC</b><br>
+						Z.A. du Layer<br>
+						9, Rue Ampère<br>
+						21110 GENLIS - France
+					</div>
+
+					<div class="col-xs-6">
+						Tél. : <span style="font-weight:bold">03 80 74 43 12</span>
+						<br>
+						Fax : <span style="font-weight:bold">03 80 74 44 96</span>
+					</div>
+				</div>
+
+			</div>
+			<div class="col-xs-offset-2 col-xs-3">
+				<ul class="no-bullets">
+					<li><strong>About</strong></li>
+					<li><a class="secondary" data-discover="true" href="">Nous contacter</a></li>
+					<li><a class="secondary" data-discover="true" href="">Notre site</a></li>
+					<li><a class="secondary" data-discover="true" href="">Notre réseau</a></li>
+					<li><a class="secondary" data-discover="true" href="">Nos services</a></li>
+				</ul>
+			</div>
+		</div>
+	</div>
+</footer>
+
+
+	<?php
+endif;
+
+
+
 // load messages
 $html = '';
 $htmlSuccess = '';

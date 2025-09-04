@@ -1859,23 +1859,13 @@ function pdf_getlinedesc($object, $i, $outputlangs, $hideref = 0, $hidedesc = 0,
 	}
 
 	/** START SPE THERSANE */
-
-	$stringColor = [
-		'316L' => '#ad0000',
-		'F316L' => '#ad0000',
-		'304L' => '#1aad00',
-		'P265GH' => '#f57d05',
-		'P280GH' => '#f57d05',
-		'A105' => '#f57d05',
-		'A420WPL6' => '#0082ad',
-		'A350LF2' => '#0082ad',
-		'A333Gr6' => '#0082ad',
-	];
-
-	foreach ($stringColor as $stK => $stV) {
-		$libelleproduitservice = str_ireplace(' '.$stK.' ', ' <strong style="color: '.$stV.'">'.$stK.'</strong> ', $libelleproduitservice);
+	if (!function_exists('metalNuanceTextReplaceColor')) {
+		dol_include_once('thersane/lib/thersane.php');
 	}
 
+	if (function_exists('metalNuanceTextReplaceColor')) {
+		$libelleproduitservice =  metalNuanceTextReplaceColor($libelleproduitservice);
+	}
 	/** END SPE THERSANE */
 
 	// Now we convert \n into br

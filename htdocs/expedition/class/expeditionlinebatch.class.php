@@ -197,7 +197,7 @@ class ExpeditionLineBatch extends CommonObject
 	 *
 	 * @param	int			$id_line_expdet		id of shipment line
 	 * @param	int			$fk_product			If provided, load also detailed information of lot
-	 * @return	int|array						-1 if KO, array of ExpeditionLineBatch if OK
+	 * @return	ExpeditionLineBatch[]|int					-1 if KO, array of ExpeditionLineBatch if OK
 	 */
 	public function fetchAll($id_line_expdet, $fk_product = 0)
 	{

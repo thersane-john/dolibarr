@@ -245,7 +245,7 @@ class pdf_eratosthene extends ModelePDFCommandes
 					}
 				}
 
-				if ($realpath && $arephoto) {
+				if (!empty($realpath) && $arephoto) {
 					$realpatharray[$i] = $realpath;
 				}
 			}

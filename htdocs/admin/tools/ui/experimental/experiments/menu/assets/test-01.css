@@ -1,0 +1,288 @@
+/* ========================
+   FOR TEST ONLY
+======================== */
+* {
+	margin: 0;
+	padding: 0;
+	box-sizing: border-box;
+}
+
+body {
+	font-family: Arial, sans-serif;
+	display: flex;
+	min-height: 100vh;
+	background-color: #f5f5f5;
+	/*background-color: #93027c;*/ /* for test */
+}
+
+/* ========================
+   VARS
+======================== */
+:root{
+	--left-menu-default-width : 64px;
+	--top-menu-height : 64px;
+
+	--left-menu-default-width : 64px;
+	--left-menu-minimized-width : 10px;
+	--left-menu-full-open-width : 200px;
+}
+
+/* ========================
+   Top Menu
+======================== */
+#top-menu {
+	--top-menu-hover-bg-color : rgba(0,0,0,0.1);
+
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: var(--top-menu-height);
+	background-color: #ffffff;
+	color: #4d5b68;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 0;
+	z-index: 1000;
+}
+
+#top-menu .top-menu-left,
+#top-menu .top-menu-center,
+#top-menu .top-menu-right {
+	display: flex;
+	align-items: center;
+}
+
+#top-menu .logo img {
+	height: calc(var(--top-menu-height) - 20px);
+	margin-left: 8px;
+}
+
+#top-menu .search-form {
+	display: flex;
+	align-items: center;
+}
+
+#top-menu .search-form input {
+	padding: 4px 8px;
+	border-radius: 4px 0 0 4px;
+	border: none;
+}
+
+#top-menu .search-form button {
+	padding: 4px 8px;
+	border: none;
+	border-radius: 0 4px 4px 0;
+	cursor: pointer;
+}
+
+#top-menu .top-nav ul {
+	list-style: none;
+	display: flex;
+	gap: 16px;
+	margin-left: 16px;
+}
+
+#top-menu .top-nav a {
+	text-decoration: none;
+}
+
+
+
+#top-menu .user-menu img.user-avatar {
+	width: 32px;
+	height: 32px;
+	border-radius: 50%;
+	margin-right: 8px;
+}
+
+.top-menu-item {
+	margin-right: 5px;
+}
+
+/* ========================
+   Left Menu
+======================== */
+#left-menu {
+	--left-menu-width : var(--left-menu-default-width);
+	--colortextlink : #ecf0f1;
+	--menu-background: #34495e;
+	--menu-background-hover: #2d3c4b;
+	position: fixed;
+	top: var(--left-menu-default-width);
+	left: 0;
+	height: 100%;
+
+	background-color: var(--menu-background);
+	color: var(--colortextlink);
+
+	transition: width 0.3s ease;
+	z-index: 900;
+	width: var(--left-menu-width);
+}
+
+
+/* Default body mode */
+body.default #left-menu {
+	--left-menu-width :  var(--left-menu-default-width);
+}
+body.minimized #left-menu {
+	--left-menu-width :  var(--left-menu-minimized-width );
+}
+
+body.full-open #left-menu, body:is(.default, .minimized) #left-menu:hover {
+	--left-menu-width :  var(--left-menu-full-open-width);
+}
+
+/* Adjustment du contenu selon le mode */
+body.default #content {
+	margin-left: var(--left-menu-default-width);
+}
+body.minimized #content {
+	margin-left: var(--left-menu-minimized-width );
+}
+body.full-open #content {
+	margin-left:  var(--left-menu-full-open-width);
+}
+
+
+/* Navigation */
+#left-menu {
+	padding-top: 10px;
+}
+#left-menu nav ul {
+	list-style: none;
+}
+
+#left-menu nav ul li {
+	position: relative;
+}
+
+body.minimized #left-menu nav {
+	display: none;
+}
+body.minimized #left-menu:hover nav {
+	display: block;
+}
+
+
+.left-menu__item{
+	position: relative;
+	display: flex;
+	align-items: center;
+	white-space: nowrap;
+	min-height: 2.5em;
+	transition: background 0.2s;
+}
+.left-menu__item:hover{
+	background-color: var(--menu-background-hover);
+}
+
+/* ========================
+   Left Menu __ DROPDROWN
+======================== */
+/* Drop down sub menu */
+.left-sub-menu-parent {
+	position: fixed;
+	background-color: var(--menu-background-hover);
+	height: calc(100vh - var(--top-menu-height));
+	top: var(--top-menu-height); /* commence juste sous le top menu */
+	left:var(--left-menu-width);
+	height: calc(100vh - var(--top-menu-height)); /* prend toute la hauteur restante */
+	width: var(--left-menu-full-open-width);
+	opacity: 0;
+
+	transform: translateX(calc(var(--left-menu-width) - var(--left-menu-full-open-width)));
+	transition: transform 0.4s ease;
+	pointer-events: none; /* évite clics avant affichage */
+}
+
+.left-menu__item:hover > .left-sub-menu-parent {
+	opacity: 1;
+	transform: translateX(0);
+	pointer-events: auto;
+}
+
+
+#left-menu nav ul li a {
+	display: block;
+	width: 100%;
+}
+
+/* Icon et label */
+#left-menu .left-menu__item__icon {
+	display: inline-block;
+	margin-left: 10px;
+	margin-right: 10px;
+	width: 44px;
+	max-width: 44px;
+	text-align: center;
+}
+/* Masquer label si minimized */
+body.default #left-menu .left-menu__item__label {
+	display: none;
+	opacity: 0;
+}
+
+#left-menu.full-open .left-menu__item__label, body.default #left-menu:hover .left-menu__item__label  {
+	display: inline-block;
+	margin-left: 8px;
+	opacity: 1;
+	transition: opacity 0.3s;
+}
+
+
+/* ========================
+   Main Content
+======================== */
+#content {
+	margin-top: 64px;
+	margin-left: 64px; /* à ajuster selon le mode */
+	padding: 16px;
+	transition: margin-left 0.3s ease;
+}
+
+
+/* ========================
+   Burger Button
+======================== */
+#burger-btn {
+	display: block;
+	--curent-object-size:40px;
+	--curent-object-padding:10px;
+	--margin : calc(var(--left-menu-default-width) - var(--curent-object-size) - var(--curent-object-padding));
+	background: none;
+	border: none;
+	cursor: pointer;
+	margin-left: var(--margin);
+	margin-right: var(--margin);
+	width: var(--curent-object-size);
+	height: var(--curent-object-size);
+
+	padding: var(--curent-object-padding);
+	border-radius: 100%;
+}
+
+#burger-btn:hover {
+	background: #ededed;
+}
+
+
+.burger-btn-icon {
+	width: calc(var(--curent-object-size) - (var(--curent-object-padding) * 2));
+	margin: 0 auto;
+	display: block;
+}
+
+/* ========================
+   SUB MENU
+======================== */
+.left-sub-menu__item{
+	margin-top: 0.5em;
+	margin-bottom: 0.3em;
+	padding:5px ;
+}
+.left-sub-menu__item__label {
+	font-weight: bold;
+}

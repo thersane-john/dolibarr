@@ -253,6 +253,13 @@ class Documentation
 					'submenu' => array(),
 					'summary' => array(),
 				),
+
+				'ExperimentalUxMenu' => array(
+					'url' => dol_buildpath($this->baseUrl.'/experimental/experiments/menu/index.php', 1),
+					'icon' => 'fas fa-flask',
+					'submenu' => array(),
+					'summary' => array(),
+				),
 			)
 		);
 

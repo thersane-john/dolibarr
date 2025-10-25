@@ -134,7 +134,7 @@ $quickTestLeftMenu = [
 		'children' => $randomSubMenu
 	]
 ];
-
+$quickTestLeftMenu = array_merge($quickTestLeftMenu, $quickTestLeftMenu, $quickTestLeftMenu, $quickTestLeftMenu);
 // phpcs:disable
 /**
  * @param $quickTestLeftMenu
@@ -148,19 +148,25 @@ function demoGenerateMenu($quickTestLeftMenu)
 	foreach ($quickTestLeftMenu as $menuBaseItem) {
 		$out.= '<li class="left-menu__item">';
 
-		$out.= '<a href="#">';
-		$out.= '<span class="left-menu__item__icon"><span class="'.$menuBaseItem['icon'].'"></span></span>';
-		$out.= '<span class="left-menu__item__label">'.$menuBaseItem['label'].'</span>';
+		$out.= '<a class="left-menu__item_label" href="#">';
+		$out.= '<span class="left-menu__item_label_icon"><span class="'.$menuBaseItem['icon'].'"></span></span>';
+		$out.= '<span class="left-menu__item_label_text"">'.$menuBaseItem['label'].'</span>';
 		$out.= '</a>';
 
 		if (!empty($menuBaseItem['children'])) {
 			$out.= '<ul class="left-sub-menu-parent" >';
+
+			$out.= '<li class="left-sub-menu__item-title">';
+			$out.= '<span class="left-menu__item-title_label_icon"><span class="'.$menuBaseItem['icon'].'"></span></span>';
+			$out.= '<span class="left-menu__item-title_label_text"">'.$menuBaseItem['label'].'</span>';
+			$out.= '</li>';
+
 			foreach ($menuBaseItem['children'] as $subMenuItem) {
 				$out.= '<li class="left-sub-menu__item">';
 
-				$out.= '<a href="#">';
-				$out.= '<span class="left-sub-menu__item__icon"><span class="'.$subMenuItem['icon'].'"></span></span>';
-				$out.= '<span class="left-sub-menu__item__label">'.$subMenuItem['label'].'</span>';
+				$out.= '<a class="left-sub-menu__item_label" href="#">';
+				$out.= '<span class="left-sub-menu__item_label_icon"><span class="'.$subMenuItem['icon'].'"></span></span>';
+				$out.= '<span class="left-sub-menu__item_label_text">'.$subMenuItem['label'].'</span>';
 				$out.= '</a>';
 
 				if (!empty($subMenuItem['children'])) {
@@ -168,12 +174,12 @@ function demoGenerateMenu($quickTestLeftMenu)
 					foreach ($subMenuItem['children'] as $subMenuChildItem) {
 						$out.= '<li class="left-sub-menu-child__item">';
 
-						$out.= '<a href="#">';
+						$out.= '<a class="left-sub-menu-child__item_label" href="#">';
 						if (!empty($subMenuChildItem['icon'])) {
-							$out.= '<span class="left-sub-menu-child__item__icon"><span class="'.$subMenuChildItem['icon'].'"></span></span>';
+							$out.= '<span class="left-sub-menu-child__item_label_icon"><span class="'.$subMenuChildItem['icon'].'"></span></span>';
 						}
 
-						$out.= '<span class="left-sub-menu-child__item__label">'.$subMenuChildItem['label'].'</span>';
+						$out.= '<span class="left-sub-menu-child__item_label_text">'.$subMenuChildItem['label'].'</span>';
 						$out.= '</a>';
 						$out.= '</li>';
 					}
@@ -243,7 +249,7 @@ function demoGenerateMenu($quickTestLeftMenu)
 	</header>
 
 	<!-- Left Menu -->
-	<aside id="left-menu" class="default">
+	<aside id="left-menu">
 		<nav>
 			<?php print demoGenerateMenu($quickTestLeftMenu); ?>
 		</nav>

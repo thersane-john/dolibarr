@@ -12,7 +12,7 @@ body {
 	display: flex;
 	min-height: 100vh;
 	background-color: #f5f5f5;
-	/*background-color: #93027c;*/ /* for test */
+	background-color: #93027c; /* for test */
 }
 
 /* ========================
@@ -120,37 +120,49 @@ body {
 	transition: width 0.3s ease;
 	z-index: 900;
 	width: var(--left-menu-width);
+
+	padding-top: 10px;
+	box-shadow: 4px 0 8px rgba(0, 0, 0, 0.2);
 }
+/*!* Effet de masquage progressif pour donner l’illusion qu’il glisse de dessous *!*/
+/*#left-menu::after {*/
+/*	content: "";*/
+/*	position: absolute;*/
+/*	top: 0;*/
+/*	right: -1px;*/
+/*	width: 1px;*/
+/*	height: 100%;*/
+/*	background: rgba(0,0,0,0.2);*/
+/*	z-index: 700; !* fine bordure au-dessus *!*/
+/*}*/
 
-
-/* Default body mode */
-body.default #left-menu {
+/* menu-default body mode */
+body:is(.menu-default,.menu-reduced) #left-menu {
 	--left-menu-width :  var(--left-menu-default-width);
 }
-body.minimized #left-menu {
+body.menu-minimized #left-menu {
 	--left-menu-width :  var(--left-menu-minimized-width );
 }
 
-body.full-open #left-menu, body:is(.default, .minimized) #left-menu:hover {
+body.menu-full-open #left-menu, body:is(.menu-default,.menu-minimized) #left-menu:hover {
 	--left-menu-width :  var(--left-menu-full-open-width);
 }
 
 /* Adjustment du contenu selon le mode */
-body.default #content {
+body:is(.menu-default,.menu-reduced) #content {
 	margin-left: var(--left-menu-default-width);
 }
-body.minimized #content {
+body.menu-minimized #content {
 	margin-left: var(--left-menu-minimized-width );
 }
-body.full-open #content {
+body.menu-full-open #content {
 	margin-left:  var(--left-menu-full-open-width);
 }
 
 
 /* Navigation */
-#left-menu {
-	padding-top: 10px;
-}
+
+
 #left-menu nav ul {
 	list-style: none;
 }
@@ -159,10 +171,10 @@ body.full-open #content {
 	position: relative;
 }
 
-body.minimized #left-menu nav {
+body.menu-minimized #left-menu nav {
 	display: none;
 }
-body.minimized #left-menu:hover nav {
+body.menu-minimized #left-menu:hover nav {
 	display: block;
 }
 
@@ -193,12 +205,16 @@ body.minimized #left-menu:hover nav {
 	width: var(--left-menu-full-open-width);
 	opacity: 0;
 
-	transform: translateX(calc(var(--left-menu-width) - var(--left-menu-full-open-width)));
-	transition: transform 0.4s ease;
+
 	pointer-events: none; /* évite clics avant affichage */
 }
+body:is(.menu-default,.menu-full-open,.menu-minimized) .left-sub-menu-parent {
+	transform: translateX(calc(var(--left-menu-width) - var(--left-menu-full-open-width)));
+	transition: transform 0.4s ease;
+}
 
-.left-menu__item:hover > .left-sub-menu-parent {
+/** .left-menu__item:hover > .left-sub-menu-parent { */
+.left-menu__item.open > .left-sub-menu-parent {
 	opacity: 1;
 	transform: translateX(0);
 	pointer-events: auto;
@@ -211,7 +227,7 @@ body.minimized #left-menu:hover nav {
 }
 
 /* Icon et label */
-#left-menu .left-menu__item__icon {
+#left-menu .left-menu__item_label_icon {
 	display: inline-block;
 	margin-left: 10px;
 	margin-right: 10px;
@@ -220,18 +236,22 @@ body.minimized #left-menu:hover nav {
 	text-align: center;
 }
 /* Masquer label si minimized */
-body.default #left-menu .left-menu__item__label {
-	display: none;
+body:is(.menu-default,.menu-reduced) #left-menu .left-menu__item_label_text {
 	opacity: 0;
+	pointer-events: none; /* évite clics avant affichage */
 }
 
-#left-menu.full-open .left-menu__item__label, body.default #left-menu:hover .left-menu__item__label  {
+#left-menu.menu-full-open .left-menu__item_label_text, body.menu-default #left-menu:hover .left-menu__item_label_text  {
 	display: inline-block;
 	margin-left: 8px;
 	opacity: 1;
 	transition: opacity 0.3s;
+	pointer-events: auto;
 }
 
+.left-sub-menu-child{
+
+}
 
 /* ========================
    Main Content
@@ -281,8 +301,30 @@ body.default #left-menu .left-menu__item__label {
 .left-sub-menu__item{
 	margin-top: 0.5em;
 	margin-bottom: 0.3em;
-	padding:5px ;
 }
-.left-sub-menu__item__label {
+.left-sub-menu__item-title {
+	text-align: center;
+	margin: 20px 0px;
+	text-transform: uppercase;
+}
+.left-menu__item-title_label_icon{
+	display: inline-block;
+	margin-right: 20px;
+}
+
+.left-sub-menu__item_label {
 	font-weight: bold;
+	/*padding:5px 10px;*/
+}
+
+.left-sub-menu-child__item_label{
+	padding:5px 10px 5px 30px;
+}
+.left-sub-menu-child__item_label:has(.left-sub-menu-child__item_label_icon){
+	padding:5px 10px 5px 10px;
+}
+
+.left-sub-menu-child__item_label_icon {
+	display: inline-block;
+	width: 20px;
 }

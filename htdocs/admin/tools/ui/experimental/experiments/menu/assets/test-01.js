@@ -147,3 +147,26 @@ document.addEventListener("DOMContentLoaded", () => {
 		});
 	}
 });
+
+/**
+ * Le menu #left-menu continue à scroller librement tant qu’il a du contenu.
+
+Si on atteint le haut ou le bas du menu et que la molette continue, alors le scroll n’est pas propagé au body.
+
+Pas de overflow: hidden, donc aucun saut de mise en page.
+ */
+document.addEventListener("DOMContentLoaded", () => {
+	const leftMenu = document.getElementById("left-menu");
+
+	leftMenu.addEventListener("wheel", e => {
+		// On récupère la position de scroll du menu
+		const atTop = leftMenu.scrollTop === 0;
+		const atBottom = leftMenu.scrollHeight - leftMenu.scrollTop === leftMenu.clientHeight;
+
+		// Si on veut scroller vers le haut alors qu'on est déjà en haut
+		// ou vers le bas alors qu'on est déjà en bas → empêche le scroll global
+		if ((atTop && e.deltaY < 0) || (atBottom && e.deltaY > 0)) {
+			e.preventDefault();
+		}
+	}, { passive: false });
+});

@@ -12,8 +12,12 @@ body {
 	display: flex;
 	min-height: 100vh;
 	background-color: #f5f5f5;
-	background-color: #93027c; /* for test */
+	/*background-color: #93027c; !* for test *!*/
 }
+
+
+
+
 
 /* ========================
    VARS
@@ -21,8 +25,6 @@ body {
 :root{
 	--left-menu-default-width : 64px;
 	--top-menu-height : 64px;
-
-	--left-menu-default-width : 64px;
 	--left-menu-minimized-width : 10px;
 	--left-menu-full-open-width : 200px;
 }
@@ -45,6 +47,8 @@ body {
 	justify-content: space-between;
 	padding: 0;
 	z-index: 1000;
+
+	box-shadow: 0 0 10px rgba(0,0,0,0.2);
 }
 
 #top-menu .top-menu-left,
@@ -110,7 +114,7 @@ body {
 	--menu-background: #34495e;
 	--menu-background-hover: #2d3c4b;
 	position: fixed;
-	top: var(--left-menu-default-width);
+	top: var(--top-menu-height);
 	left: 0;
 	height: 100%;
 
@@ -123,7 +127,13 @@ body {
 
 	padding-top: 10px;
 	box-shadow: 4px 0 8px rgba(0, 0, 0, 0.2);
+
+
+	overscroll-behavior: contain;
 }
+
+
+
 /*!* Effet de masquage progressif pour donner l’illusion qu’il glisse de dessous *!*/
 /*#left-menu::after {*/
 /*	content: "";*/
@@ -205,9 +215,14 @@ body.menu-minimized #left-menu:hover nav {
 	width: var(--left-menu-full-open-width);
 	opacity: 0;
 
+	box-shadow: 10px 0 10px rgba(0,0,0,0.2), inset 5px 0 10px rgba(0,0,0,0.1);
 
 	pointer-events: none; /* évite clics avant affichage */
+
+	overflow-y: auto;
+	overscroll-behavior: contain;
 }
+
 body:is(.menu-default,.menu-full-open,.menu-minimized) .left-sub-menu-parent {
 	transform: translateX(calc(var(--left-menu-width) - var(--left-menu-full-open-width)));
 	transition: transform 0.4s ease;
@@ -228,11 +243,12 @@ body:is(.menu-default,.menu-full-open,.menu-minimized) .left-sub-menu-parent {
 
 /* Icon et label */
 #left-menu .left-menu__item_label_icon {
+	--icon-width: 24px;
 	display: inline-block;
-	margin-left: 10px;
-	margin-right: 10px;
-	width: 44px;
-	max-width: 44px;
+	margin-left: calc( (var(--left-menu-default-width) - var(--icon-width)) / 2);
+	margin-right: calc( (var(--left-menu-default-width) - var(--icon-width)) / 2);
+	width: var(--icon-width);
+	max-width: var(--icon-width);
 	text-align: center;
 }
 /* Masquer label si minimized */
@@ -259,10 +275,23 @@ body:is(.menu-default,.menu-reduced) #left-menu .left-menu__item_label_text {
 #content {
 	margin-top: 64px;
 	margin-left: 64px; /* à ajuster selon le mode */
-	padding: 16px;
 	transition: margin-left 0.3s ease;
+	width: 100%;
 }
 
+main#content section{
+
+	margin: 16px;
+	background-color: #fff;
+	padding: 20px;
+	border-radius: 8px;
+}
+
+main#content header{
+	margin: 0 0 16px 0;
+	padding: 16px 32px;
+	background-color: #fff;
+}
 
 /* ========================
    Burger Button
@@ -314,7 +343,9 @@ body:is(.menu-default,.menu-reduced) #left-menu .left-menu__item_label_text {
 
 .left-sub-menu__item_label {
 	font-weight: bold;
-	/*padding:5px 10px;*/
+	padding:10px 10px;
+	border-top: 1px solid rgba(255,255,255,0.1);
+	border-bottom: 1px solid rgba(255,255,255,0.1);
 }
 
 .left-sub-menu-child__item_label{

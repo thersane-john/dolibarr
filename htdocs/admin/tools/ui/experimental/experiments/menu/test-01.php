@@ -257,8 +257,134 @@ function demoGenerateMenu($quickTestLeftMenu)
 
 	<!-- Main Content -->
 	<main id="content">
-		<h1>Bienvenue sur Dolibarr</h1>
-		<p>Contenu principal ici...</p>
+		<header class="header" >
+			<h1>Présentation Lorem Ipsum</h1>
+			<p class="lead">Une page factice pour démonstration : titres, paragraphes, tableau et listes.</p>
+		</header>
+
+
+		<section class="content" role="main" aria-label="Contenu principal">
+			<!-- En-tête de page -->
+			<header class="page-header">
+
+			</header>
+
+			<!-- Section principale -->
+			<article class="article-intro">
+				<h2>Introduction</h2>
+				<p>
+					Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer nec odio. Praesent libero.
+					Sed cursus ante dapibus diam. Sed nisi. Nulla quis sem at nibh elementum imperdiet.
+					Duis sagittis ipsum. Praesent mauris. Fusce nec tellus sed augue semper porta.
+				</p>
+				<p>
+					Curabitur sodales ligula in libero. Sed dignissim lacinia nunc. Curabitur tortor. Pellentesque
+					nibh. Aenean quam. In scelerisque sem at dolor. Maecenas mattis. Sed convallis tristique sem.
+				</p>
+			</article>
+
+			<!-- Sous-section -->
+			<section class="features">
+				<h2>Points clés</h2>
+				<ul>
+					<li><strong>Performance :</strong> Fusce nec tellus sed augue semper porta.</li>
+					<li><strong>Accessibilité :</strong> Curabitur sodales ligula in libero.</li>
+					<li><strong>Sécurité :</strong> Maecenas mattis, sed convallis.</li>
+				</ul>
+
+				<h3>Résumé court</h3>
+				<p>
+					Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas.
+					Vestibulum tortor quam, feugiat vitae, ultricies eget, tempor sit amet, ante.
+				</p>
+			</section>
+
+			<!-- Tableau de démonstration -->
+			<section class="data-table" aria-labelledby="table-title">
+				<h2 id="table-title">Tableau récapitulatif</h2>
+				<table summary="Tableau factice listant des exemples de produits et statuts">
+					<caption>Exemples de lignes produit (données fictives)</caption>
+					<thead>
+					<tr>
+						<th scope="col">#</th>
+						<th scope="col">Produit</th>
+						<th scope="col">Description</th>
+						<th scope="col">Quantité</th>
+						<th scope="col">Statut</th>
+					</tr>
+					</thead>
+					<tbody>
+					<tr>
+						<td>1</td>
+						<td>Widget Alpha</td>
+						<td>Lorem ipsum dolor sit amet, consectetur.</td>
+						<td>12</td>
+						<td><span class="badge badge-ok">Disponible</span></td>
+					</tr>
+					<tr>
+						<td>2</td>
+						<td>Module Beta</td>
+						<td>Integer nec odio. Praesent libero.</td>
+						<td>0</td>
+						<td><span class="badge badge-warn">Rupture</span></td>
+					</tr>
+					<tr>
+						<td>3</td>
+						<td>Kit Gamma</td>
+						<td>Sed cursus ante dapibus diam.</td>
+						<td>5</td>
+						<td><span class="badge badge-low">Faible</span></td>
+					</tr>
+					</tbody>
+					<tfoot>
+					<tr>
+						<td colspan="4" style="text-align:right;">Total articles listés</td>
+						<td>3</td>
+					</tr>
+					</tfoot>
+				</table>
+			</section>
+
+			<!-- Bloc citation et CTA -->
+			<aside class="callout" role="complementary" aria-label="Citation">
+				<blockquote>
+					« Lorem ipsum dolor sit amet, consectetur adipiscing elit — démonstration de contenu factice. »
+					<footer>— Citation fictive</footer>
+				</blockquote>
+				<p>
+					<a href="#contact" class="btn">Contactez-nous</a>
+				</p>
+			</aside>
+
+			<!-- Formulaire de contact factice -->
+			<section class="contact-form" aria-labelledby="contact">
+				<h2 id="contact">Nous contacter</h2>
+				<form action="#" method="post" novalidate>
+					<div class="form-row">
+						<label for="name">Nom</label>
+						<input id="name" name="name" type="text" placeholder="Votre nom" />
+					</div>
+					<div class="form-row">
+						<label for="email">Email</label>
+						<input id="email" name="email" type="email" placeholder="you@example.com" />
+					</div>
+					<div class="form-row">
+						<label for="message">Message</label>
+						<textarea id="message" name="message" rows="4" placeholder="Votre message..."></textarea>
+					</div>
+					<div class="form-actions">
+						<button type="submit">Envoyer</button>
+						<button type="reset" class="secondary">Réinitialiser</button>
+					</div>
+				</form>
+			</section>
+
+			<!-- Pied de page de la section -->
+			<footer class="section-footer">
+				<p class="muted">Page de démonstration — contenu fictif • Généré pour tests et maquettes.</p>
+			</footer>
+		</section>
+
 	</main>
 
 <?php

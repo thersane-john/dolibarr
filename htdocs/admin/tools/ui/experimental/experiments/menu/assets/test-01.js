@@ -170,3 +170,59 @@ document.addEventListener("DOMContentLoaded", () => {
 		}
 	}, { passive: false });
 });
+
+document.addEventListener("DOMContentLoaded", () => {
+	const input = document.getElementById('top-global-search');
+	const buttons = document.querySelectorAll('#top-global-search-buttons .global-search-item');
+	const quickSearchDiv = document.getElementById('quick-search-buttons');
+
+	input.addEventListener('input', () => {
+		const value = input.value.trim();
+
+		// On vide la div des résultats rapides
+		quickSearchDiv.innerHTML = '';
+
+		buttons.forEach(btn => {
+			btn.classList.remove('highlight');
+			btn.classList.remove('hidden');
+
+			let regexStr = btn.getAttribute('data-regex');
+
+			if (!regexStr) {
+				return;
+			}
+
+			// Retirer les / de début et fin et le i
+			regexStr = regexStr.replace(/^\/|\/[a-z]*$/gi, '');
+
+			// Supprime les alternatives vides au début ou fin
+			regexStr = regexStr.replace(/^\(\^?\)|\|\)$/g, '');
+
+			if (!regexStr) {
+				btn.classList.remove('highlight');
+				return;
+			}
+
+			let regex;
+			try {
+				// Match depuis le début
+				regex = new RegExp('^' + regexStr, 'i');
+			} catch (e) {
+				console.error(`Regex invalide sur le bouton: ${regexStr}`);
+				btn.classList.remove('highlight');
+				return;
+			}
+
+			if (regex.test(value)) {
+				btn.classList.add('highlight');
+
+				// Cloner le bouton pour l’ajouter dans #quick-search-buttons
+				const clone = btn.cloneNode(true);
+				quickSearchDiv.appendChild(clone);
+				btn.classList.add('hidden');// fait disparaitre temporairement la source du clone
+			} else {
+				btn.classList.remove('highlight');
+			}
+		});
+	});
+});

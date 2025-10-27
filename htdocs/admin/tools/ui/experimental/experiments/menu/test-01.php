@@ -136,6 +136,111 @@ $quickTestLeftMenu = [
 ];
 $quickTestLeftMenu = array_merge($quickTestLeftMenu, $quickTestLeftMenu, $quickTestLeftMenu, $quickTestLeftMenu);
 // phpcs:disable
+
+function generateRegexFromMask($masks) {
+	if (!is_array($masks)) {
+		$masks = [$masks];
+	}
+
+	$regexes = [];
+
+	foreach ($masks as $mask) {
+		// Remplacements des balises d'abord
+		$mask = preg_replace_callback(
+			'/\{0+(\+\d+)?(@\d+)?\}/',
+			function ($matches) {
+				$length = preg_match_all('/0/', $matches[0], $m) ? count($m[0]) : 1;
+				return '\d{' . $length . '}'; // Compteur général
+			},
+			$mask
+		);
+
+		$replacements = [
+			'{dd}'     => '(0[1-9]|[12][0-9]|3[01])',
+			'{mm}'     => '(0[1-9]|1[0-2])',
+			'{yyyy}'   => '\d{4}',
+			'{yy}'     => '\d{2}',
+			'{y}'      => '\d',
+			'/\{cccc\d*\}/' => '[A-Za-z0-9]+',
+			'{tttt}'   => '[A-Za-z0-9]+',
+			'/\{cccc0+\}/' => '[A-Za-z0-9]+\d+',
+		];
+
+		// Remplacements simples
+		foreach ($replacements as $search => $replace) {
+			if (strpos($search, '/') === 0) {
+				// regex
+				$mask = preg_replace($search, $replace, $mask);
+			} else {
+				// chaîne simple
+				$mask = str_replace($search, $replace, $mask);
+			}
+		}
+
+
+
+		// Match depuis le début (pas de $)
+		$regexes[] = '^' . $mask;
+	}
+
+	return '/(' . implode('|', $regexes) . ')/i'; // i = insensible à la casse
+}
+
+
+function generateRegexFromMaskForTypingSearch($masks) {
+	if (!is_array($masks)) {
+		$masks = [$masks];
+	}
+
+	$regexes = [];
+
+	foreach ($masks as $mask) {
+
+		if(empty($mask)) {
+			continue;
+		}
+
+		// Remplacements des balises d'abord
+		$mask = preg_replace_callback(
+			'/\{0+(\+\d+)?(@\d+)?\}/',
+			function ($matches) {
+				$length = preg_match_all('/0/', $matches[0], $m) ? count($m[0]) : 1;
+				return '\d{1,' . $length . '}'; // Compteur général
+			},
+			$mask
+		);
+
+		$replacements = [
+			'{dd}'     => '(0[1-9]|[12][0-9]|3[01])',
+			'{mm}'     => '(0[1-9]|1[0-2])',
+			'{yyyy}'   => '\d{1,4}',
+			'{yy}'     => '\d{1,2}',
+			'{y}'      => '\d',
+			'/\{cccc\d*\}/' => '[A-Za-z0-9]+',
+			'{tttt}'   => '[A-Za-z0-9]+',
+			'/\{cccc0+\}/' => '[A-Za-z0-9]+\d+',
+		];
+
+		// Remplacements simples
+		foreach ($replacements as $search => $replace) {
+			if (strpos($search, '/') === 0) {
+				// regex
+				$mask = preg_replace($search, $replace, $mask);
+			} else {
+				// chaîne simple
+				$mask = str_replace($search, $replace, $mask);
+			}
+		}
+
+
+
+		// Match depuis le début (pas de $)
+		$regexes[] = '^' . $mask;
+	}
+
+	return '/(' . implode('|', $regexes) . ')/i'; // i = insensible à la casse
+}
+
 /**
  * @param $quickTestLeftMenu
  *
@@ -224,8 +329,143 @@ function demoGenerateMenu($quickTestLeftMenu)
 
 		<div class="top-menu-center">
 			<form class="search-form" action="#" method="get">
-				<input type="search" placeholder="Rechercher..." aria-label="Recherche">
-				<button type="submit">🔍</button>
+				<input id="top-global-search" type="search" placeholder="Rechercher..." aria-label="Recherche">
+				<div class="top-menu-search-dropdown">
+					<div id="quick-search-buttons" class="top-menu-search-dropdown-button-list">
+
+					</div>
+					<div id="top-global-search-buttons"  class="top-menu-search-dropdown-button-list">
+						<button class="dropdown-item global-search-item tdoverflowmax300"
+								data-target="societe/list.php" ><span
+								class="fas fa-building pictofixedwidth" style=" color: #6c6aa8;"></span> Tiers
+						</button>
+						<button class="dropdown-item global-search-item tdoverflowmax300"
+								data-target="contact/list.php"><span
+								class="fas fa-address-book pictofixedwidth" style=" color: #6c6aa8;"></span> Contacts
+						</button>
+						<button class="dropdown-item global-search-item tdoverflowmax300"
+								data-target="product/list.php"><span
+								class="fas fa-cube pictofixedwidth" style=" color: #a69944;"></span> Produits ou
+							services
+						</button>
+						<button class="dropdown-item global-search-item tdoverflowmax300"
+								data-target="product/stock/productlot_list.php"><span
+								class="fas fa-barcode pictofixedwidth" style=" color: #a69944;"></span> Lots / Séries
+						</button>
+						<button class="dropdown-item global-search-item tdoverflowmax300"
+								data-target="projet/list.php"><span
+								class="fas fa-project-diagram  em088 infobox-project pictofixedwidth" style=""></span>
+							Projets
+						</button>
+						<button class="dropdown-item global-search-item tdoverflowmax300"
+								data-target="projet/tasks/list.php"><span
+								class="fas fa-tasks infobox-project pictofixedwidth" style=""></span> Tâches
+						</button>
+						<button class="dropdown-item global-search-item tdoverflowmax300"
+								data-target="comm/propal/list.php"><span
+								class="fas fa-file-signature infobox-propal pictofixedwidth" style=""></span>
+							Propositions/devis
+						</button>
+						<button class="dropdown-item global-search-item tdoverflowmax300"
+								data-regex="^CD"
+								data-target="commande/list.php"><span
+								class="fas fa-file-invoice infobox-commande pictofixedwidth" style=""></span> Commandes
+							clients
+						</button>
+						<button class="dropdown-item global-search-item tdoverflowmax300"
+								data-target="expedition/list.php"><span
+								class="fas fa-dolly  em092 infobox-commande pictofixedwidth" style=""></span>
+							Expéditions clients
+						</button>
+						<button class="dropdown-item global-search-item tdoverflowmax300"
+								data-regex="<?php print dol_htmlentities(generateRegexFromMaskForTypingSearch([
+									getDolGlobalString("FACTURE_MERCURE_MASK_INVOICE"),
+									getDolGlobalString("FACTURE_MERCURE_MASK_REPLACEMENT"),
+									getDolGlobalString("FACTURE_MERCURE_MASK_CREDIT"),
+									getDolGlobalString("FACTURE_MERCURE_MASK_DEPOSIT"),
+								 ])); ?>"
+								data-target="compta/facture/list.php"><span
+								class="fas fa-file-invoice-dollar infobox-commande pictofixedwidth" style=""></span>
+							Factures clients
+						</button>
+						<button class="dropdown-item global-search-item tdoverflowmax300"
+								data-target="compta/facture/invoicetemplate_list.php"><span
+								class="fas fa-file-invoice-dollar infobox-commande pictofixedwidth" style=""></span>
+							Factures modèles
+						</button>
+						<button class="dropdown-item global-search-item tdoverflowmax300"
+								data-regex="^DEV"
+								data-target="supplier_proposal/list.php"><span
+								class="fas fa-file-signature infobox-supplier_proposal pictofixedwidth" style=""></span>
+							Propositions commerciales fournisseurs
+						</button>
+						<button class="dropdown-item global-search-item tdoverflowmax300"
+								data-regex="^CF"
+								data-target="fourn/commande/list.php"><span
+								class="fas fa-dol-order_supplier infobox-order_supplier pictofixedwidth"
+								style=""></span> Commandes fournisseurs
+						</button>
+						<button class="dropdown-item global-search-item tdoverflowmax300"
+								data-regex="<?php print dol_htmlentities(generateRegexFromMaskForTypingSearch([
+																								   getDolGlobalString("SUPPLIER_INVOICE_TULIP_MASK"),
+																								   getDolGlobalString("SUPPLIER_CREDIT_TULIP_MASK"),
+																								   getDolGlobalString("SUPPLIER_DEPOSIT_TULIP_MASK"),
+																							   ])); ?>"
+								data-target="fourn/facture/list.php"><span
+								class="fas fa-file-invoice-dollar infobox-order_supplier pictofixedwidth"
+								style=""></span> Factures fournisseur
+						</button>
+						<button class="dropdown-item global-search-item tdoverflowmax300"
+								data-target="contrat/list.php"><span
+								class="fas fa-suitcase  em092 infobox-contrat pictofixedwidth" style=""></span> Contrats
+						</button>
+						<button class="dropdown-item global-search-item tdoverflowmax300"
+								data-target="fichinter/list.php"><span
+								class="fas fa-ambulance  em080 infobox-contrat pictofixedwidth" style=""></span>
+							Interventions
+						</button>
+						<button class="dropdown-item global-search-item tdoverflowmax300"
+								data-target="knowledgemanagement/knowledgerecord_list.php?mainmenu=ticket">
+							<span class="fas fa-ticket-alt infobox-contrat rotate90 pictofixedwidth" style=""></span>
+							Base de connaissance
+						</button>
+						<button class="dropdown-item global-search-item tdoverflowmax300"
+								data-target="ticket/list.php?mainmenu=ticket"><span
+								class="fas fa-ticket-alt infobox-contrat pictofixedwidth" style=""></span> Tickets
+						</button>
+						<button class="dropdown-item global-search-item tdoverflowmax300"
+								data-target="compta/paiement/list.php?leftmenu=customers_bills_payment">
+							<span class="fas fa-money-check-alt  em080 infobox-bank_account pictofixedwidth"
+								  style=""></span> Règlements clients
+						</button>
+						<button class="dropdown-item global-search-item tdoverflowmax300"
+								data-target="fourn/paiement/list.php?leftmenu=suppliers_bills_payment">
+							<span class="fas fa-money-check-alt  em080 infobox-bank_account pictofixedwidth"
+								  style=""></span> Règlements fournisseurs
+						</button>
+						<button class="dropdown-item global-search-item tdoverflowmax300"
+								data-target="compta/bank/various_payment/list.php?leftmenu=tax_various">
+							<span class="fas fa-money-check-alt  em080 infobox-bank_account pictofixedwidth"
+								  style=""></span> Paiements divers
+						</button>
+						<button class="dropdown-item global-search-item tdoverflowmax300"
+								data-target="user/list.php"><span
+								class="fas fa-user infobox-adherent pictofixedwidth" style=""></span> Utilisateurs
+						</button>
+						<button class="dropdown-item global-search-item tdoverflowmax300"
+								data-target="expensereport/list.php?mainmenu=hrm"><span
+								class="fas fa-wallet infobox-expensereport pictofixedwidth" style=""></span> Notes de
+							frais
+						</button>
+						<button class="dropdown-item global-search-item tdoverflowmax300"
+								data-target="holiday/list.php?mainmenu=hrm"><span
+								class="fas fa-umbrella-beach  em088 infobox-holiday pictofixedwidth" style=""></span>
+							Congés
+						</button>
+					</div>
+
+
+				</div>
 			</form>
 			<nav class="top-nav">
 				<ul>
@@ -281,6 +521,27 @@ function demoGenerateMenu($quickTestLeftMenu)
 					Curabitur sodales ligula in libero. Sed dignissim lacinia nunc. Curabitur tortor. Pellentesque
 					nibh. Aenean quam. In scelerisque sem at dolor. Maecenas mattis. Sed convallis tristique sem.
 				</p>
+
+
+				<?php
+
+				var_dump(getDolGlobalString("FACTURE_MERCURE_MASK_INVOICE"));
+
+				var_dump(dol_htmlentities(generateRegexFromMaskForTypingSearch([
+																	   getDolGlobalString("FACTURE_MERCURE_MASK_INVOICE")
+																   ])));
+
+				var_dump(dol_htmlentities(generateRegexFromMaskForTypingSearch([
+									getDolGlobalString("FACTURE_MERCURE_MASK_INVOICE"),
+									getDolGlobalString("FACTURE_MERCURE_MASK_REPLACEMENT"),
+									getDolGlobalString("FACTURE_MERCURE_MASK_CREDIT"),
+									getDolGlobalString("FACTURE_MERCURE_MASK_DEPOSIT"),
+								 ])));
+
+				?>
+
+
+
 			</article>
 
 			<!-- Sous-section -->
@@ -302,7 +563,7 @@ function demoGenerateMenu($quickTestLeftMenu)
 			<!-- Tableau de démonstration -->
 			<section class="data-table" aria-labelledby="table-title">
 				<h2 id="table-title">Tableau récapitulatif</h2>
-				<table summary="Tableau factice listant des exemples de produits et statuts">
+				<table class="tagtable nobottomiftotal liste listwithfilterbefore" summary="Tableau factice listant des exemples de produits et statuts">
 					<caption>Exemples de lignes produit (données fictives)</caption>
 					<thead>
 					<tr>

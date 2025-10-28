@@ -474,6 +474,7 @@ function demoGenerateMenu($quickTestLeftMenu)
 
 
 					</li>
+					<li class="top-nav-item" ><a href="#"> Créer</a></li>
 					<li class="top-nav-item" ><a href="#"> Menu 1</a></li>
 					<li class="top-nav-item" ><a href="#">Menu 2</a></li>
 				</ul>

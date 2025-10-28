@@ -30,6 +30,25 @@ h1,h2,h3 {
 	display: none !important;
 }
 
+.top-nav-big-icon{
+	display: flex;
+	align-items: center;
+	justify-content: center;
+
+	border: 1px solid #8b8b8b;
+	color:  #8b8b8b;
+	height: 32px;
+	width: 32px;
+	border-radius: 50%;
+ }
+
+.top-nav-big-icon:hover{
+	cursor: pointer;
+	border: 1px solid var(--colortextlink);
+	color: var(--colortextlink);
+}
+
+
 /* ========================
    VARS
 ======================== */
@@ -77,7 +96,10 @@ h1,h2,h3 {
 #top-menu .search-form {
 	display: block;
 	position: relative;
+	margin-right: 64px;
 }
+
+
 
 .top-menu-search-dropdown{
 	display: none;
@@ -158,6 +180,7 @@ opacity: 0.6;
 #top-menu .top-nav ul {
 	list-style: none;
 	display: flex;
+	align-items: center;
 	gap: 16px;
 	margin-left: 16px;
 }
@@ -187,6 +210,9 @@ opacity: 0.6;
 	--colortextlink : #ecf0f1;
 	--menu-background: #34495e;
 	--menu-background-hover: rgb(45, 60, 75);
+
+
+
 	position: fixed;
 	top: var(--top-menu-height);
 	left: 0;
@@ -228,9 +254,14 @@ body.menu-minimized #left-menu {
 	--left-menu-width :  var(--left-menu-minimized-width );
 }
 
-body.menu-full-open #left-menu, body:is(.menu-default,.menu-minimized) #left-menu:hover {
+body.menu-minimized #left-menu:hover {
+	--left-menu-width :  var(--left-menu-default-width);
+}
+
+body.menu-full-open #left-menu, body.menu-default #left-menu:hover {
 	--left-menu-width :  var(--left-menu-full-open-width);
 }
+
 
 /* Adjustment du contenu selon le mode */
 body:is(.menu-default,.menu-reduced) #content {
@@ -299,7 +330,7 @@ body.menu-minimized #left-menu:hover nav {
 	/*backdrop-filter: blur(5px);*/
 }
 
-body:is(.menu-default,.menu-full-open,.menu-minimized) .left-sub-menu-parent {
+body:is(.menu-default,.menu-full-open) .left-sub-menu-parent {
 	transform: translateX(calc(var(--left-menu-width) - var(--left-menu-full-open-width)));
 	transition: transform 0.4s ease;
 }
@@ -328,7 +359,7 @@ body:is(.menu-default,.menu-full-open,.menu-minimized) .left-sub-menu-parent {
 	text-align: center;
 }
 /* Masquer label si minimized */
-body:is(.menu-default,.menu-reduced) #left-menu .left-menu__item_label_text {
+body:is(.menu-default,.menu-reduced,.menu-minimized) #left-menu .left-menu__item_label_text {
 	opacity: 0;
 	pointer-events: none; /* évite clics avant affichage */
 }

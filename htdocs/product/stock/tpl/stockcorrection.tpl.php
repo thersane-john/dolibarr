@@ -238,7 +238,7 @@ $valformovementlabel = ((GETPOST("label") && (GETPOST('label') != $langs->trans(
 /** SPE THERSANE  */
 $labelCorrectionCoulee = 'Correction du coulée AAAA vers BBBB pour le produit '.$productref;
 print '<tr>';
-print '<td colspan="4" ><div class="info">S\'il s\'agit d\'une correction de coulée, afficher un message du type : :
+print '<td colspan="4" ><div class="info">S\'il s\'agit d\'une correction de coulée, mettre un message du type : :
 <br/><b>Correction du coulée AAAA vers BBBB pour le produit '.$productref.'</b>
 <br/>à la fois lors de la suppression et de l\'ajout en stock.
 </div>';

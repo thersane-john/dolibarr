@@ -234,6 +234,18 @@ print '</tr>';
 
 // Label for movement of id of inventory
 $valformovementlabel = ((GETPOST("label") && (GETPOST('label') != $langs->trans("MovementCorrectStock", ''))) ? GETPOST("label") : $langs->trans("MovementCorrectStock", $productref));
+
+/** SPE THERSANE  */
+$labelCorrectionCoulee = 'Correction du coulée AAAA vers BBBB pour le produit '.$productref;
+print '<tr>';
+print '<td colspan="4" ><div class="info">S\'il s\'agit d\'une correction de coulée, afficher un message du type : :
+<br/><b>Correction du coulée AAAA vers BBBB pour le produit '.$productref.'</b>
+<br/>à la fois lors de la suppression et de l\'ajout en stock.
+</div>';
+print '</td>';
+print '</tr>';
+/** FIN SPE THERSANE  */
+
 print '<tr>';
 print '<td>'.$langs->trans("MovementLabel").'</td>';
 print '<td>';

@@ -69,7 +69,6 @@ top_httphead('application/json');
 if ($idprod > 0) {
 	$producttmp = new ProductFournisseur($db);
 	$producttmp->fetch($idprod);
-
 	$sorttouse = 's.nom, pfp.quantity, pfp.price';
 	if (GETPOST('bestpricefirst')) {
 		$sorttouse = 'pfp.unitprice, s.nom, pfp.quantity, pfp.price';
@@ -110,7 +109,11 @@ if ($idprod > 0) {
 				"title" => $title,
 				"currency" => $conf->currency,
 				"currencySymbol" => $langs->getCurrencySymbol($conf->currency),
-
+				'dataHtml' => '<strong class="form-select-option-supplier-name">'. $productSupplier->fourn_name .'</strong> : <small>'.$productSupplier->ref_supplier.'</small>
+								<span class="badge badge-dark badge-pill pull-right">'. price($price, 0, $langs, 0, 0, -1, $conf->currency).'</span>
+								<br><small>'.dol_print_date($productSupplier->fourn_date_modification).'</small>
+								<small class="pull-right">/ '. ($productSupplier->fourn_qty == 1 ? $langs->trans("Unit") : $langs->trans("Units")) .'</small>
+								',
 				// New data to allow js UX to build more interesting stuff
 				"supplierData" => [
 					'price' => (float) $productSupplier->fourn_price,
@@ -133,6 +136,8 @@ if ($idprod > 0) {
 
 	// After best supplier prices and before costprice
 	if (isModEnabled('stock')) {
+		$langs->load('stocks');
+		$producttmp->load_stock();
 		// Add price for pmp
 		$price = $producttmp->pmp;
 		if (empty($price) && getDolGlobalString('PRODUCT_USE_SUB_COST_PRICES_IF_COST_PRICE_EMPTY')) {
@@ -149,7 +154,17 @@ if ($idprod > 0) {
 			}
 		}
 
-		$prices[] = array("id" => 'pmpprice', "price" => price2num($price, 'MU'), "label" => $langs->trans("PMPValueShort").': '.price($price, 0, $langs, 0, 0, -1, $conf->currency), "title" => $langs->trans("PMPValueShort").': '.price($price, 0, $langs, 0, 0, -1, $conf->currency));  // For price field, we must use price2num(), for label or title, price()
+		$prices[] = array(
+			"id" => 'pmpprice',
+			"price" => price2num($price, 'MU'),
+			"label" => $langs->trans("PMPValueShort").': '.price($price, 0, $langs, 0, 0, -1, $conf->currency),
+			"title" => $langs->trans("PMPValueShort").': '.price($price, 0, $langs, 0, 0, -1, $conf->currency),
+			'dataHtml' => '<strong class="form-select-option-supplier-name">'.$langs->trans("PMPValueShort").'</strong>
+							<span class="badge badge-dark badge-pill pull-right">'.price($price, 0, $langs, 0, 0, 2, $conf->currency).'</span>
+							<br><small>'.$langs->trans('RealStock').' <strong>'.price($producttmp->stock_reel, 0, '', 1, 0).'</strong></small>
+							<small class="pull-right">'.$langs->trans('VirtualStock').' <strong>'.price($producttmp->stock_theorique, 0, '', 1, 0).'</strong></small>
+							'
+		);  // For price field, we must use price2num(), for label or title, price()
 	}
 
 	// Add price for costprice (at end)
@@ -168,7 +183,14 @@ if ($idprod > 0) {
 		}
 	}
 
-	$prices[] = array("id" => 'costprice', "price" => price2num($price), "label" => $langs->trans("CostPrice").': '.price($price, 0, $langs, 0, 0, -1, $conf->currency), "title" => $langs->trans("PMPValueShort").': '.price($price, 0, $langs, 0, 0, -1, $conf->currency)); // For price field, we must use price2num(), for label or title, price()
+	$prices[] = array(
+		"id" => 'costprice',
+		"price" => price2num($price),
+		"label" => $langs->trans("CostPrice").': '.price($price, 0, $langs, 0, 0, -1, $conf->currency),
+		"title" => $langs->trans("CostPrice").': '.price($price, 0, $langs, 0, 0, -1, $conf->currency),
+		'dataHtml' => '<strong class="form-select-option-supplier-name">'.$langs->trans("CostPrice").'</strong> <span class="badge badge-dark badge-pill pull-right">'.price($price, 0, $langs, 0, 0, -1, $conf->currency).'</span>'
+
+	); // For price field, we must use price2num(), for label or title, price()
 
 	$parameters = array(
 		'prices' => &$prices,

@@ -103,10 +103,11 @@ if ($idprod > 0) {
 			}
 
 			$prices[] = array(
-				"id" => $productSupplier->product_fourn_price_id,
+				"id" => (int) $productSupplier->product_fourn_price_id,
 				"price" => price2num($price, '', 0),
 				"label" => $label,
 				"title" => $title,
+				"default" => false, // will determine selected price
 				"currency" => $conf->currency,
 				"currencySymbol" => $langs->getCurrencySymbol($conf->currency),
 				'dataHtml' => '<strong class="form-select-option-supplier-name">'. $productSupplier->fourn_name .'</strong> : <small>'.$productSupplier->ref_supplier.'</small>
@@ -157,6 +158,7 @@ if ($idprod > 0) {
 		$prices[] = array(
 			"id" => 'pmpprice',
 			"price" => price2num($price, 'MU'),
+			"default" => false, // will determine selected price
 			"label" => $langs->trans("PMPValueShort").': '.price($price, 0, $langs, 0, 0, -1, $conf->currency),
 			"title" => $langs->trans("PMPValueShort").': '.price($price, 0, $langs, 0, 0, -1, $conf->currency),
 			'dataHtml' => '<strong class="form-select-option-supplier-name">'.$langs->trans("PMPValueShort").'</strong>
@@ -186,6 +188,7 @@ if ($idprod > 0) {
 	$prices[] = array(
 		"id" => 'costprice',
 		"price" => price2num($price),
+		"default" => false, // will determine selected price
 		"label" => $langs->trans("CostPrice").': '.price($price, 0, $langs, 0, 0, -1, $conf->currency),
 		"title" => $langs->trans("CostPrice").': '.price($price, 0, $langs, 0, 0, -1, $conf->currency),
 		'dataHtml' => '<strong class="form-select-option-supplier-name">'.$langs->trans("CostPrice").'</strong> <span class="badge badge-dark badge-pill pull-right">'.price($price, 0, $langs, 0, 0, -1, $conf->currency).'</span>'
@@ -199,6 +202,26 @@ if ($idprod > 0) {
 	);
 
 	$hookmanager->executeHooks('afterGetSupplierPrices', $parameters, $producttmp);
+
+	// Check if a default price is set
+	$defaultPriceIsSet = false;
+	$minPriceId = false;
+	$minPriceAmount = 0;
+	foreach ($prices as &$priceData) {
+		if (!empty($priceData['default'])) {
+			$defaultPriceIsSet = true;
+		}
+
+		if (is_numeric($priceData['id']) && floatval($priceData['price']) > 0 && (empty($minPriceAmount) || floatval($priceData['price']) < $minPriceAmount)) {
+			$minPriceAmount = floatval($priceData['price']);
+			$minPriceId = $priceData['id'];
+		}
+	}
+
+	// determine default price
+	if (!$defaultPriceIsSet) {
+		// TODO
+	}
 }
 
 echo json_encode($prices);

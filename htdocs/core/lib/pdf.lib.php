@@ -2551,7 +2551,10 @@ function pdf_getLinkedObjects(&$object, $outputlangs)
 	foreach ($object->linkedObjects as $objecttype => $objects) {
 		// SPE THERSANE au cas ou le hook ne marche pas
 		$supplierElements = array('supplier_proposal', 'supplier_order', 'order_supplier', 'proposal_supplier');
-		if ( !in_array($object->element, $supplierElements) && in_array($objecttype, $supplierElements)) {
+		if (
+				(!in_array($object->element, $supplierElements) && in_array($objecttype, $supplierElements))
+				|| (in_array($object->element, $supplierElements) && !in_array($objecttype, $supplierElements))
+		) {
 			// Remove customer element from supplier PDF
 			continue;
 		}

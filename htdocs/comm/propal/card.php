@@ -3219,8 +3219,8 @@ if ($action == 'create') {
 		$linktoelem = $form->showLinkToObjectBlock($object, null, array('propal'));
 
 		$compatibleImportElementsList = false;
-		if ($user->hasRight('propal', 'creer') && $object->statut == Propal::STATUS_DRAFT) {
-			$compatibleImportElementsList = array('commande', 'propal', 'facture', 'propal'); // import from linked elements
+		if ($user->hasRight('propal', 'creer') && $object->status == Propal::STATUS_DRAFT) {
+			$compatibleImportElementsList = array('commande', 'propal', 'facture'); // import from linked elements
 		}
 		$somethingshown = $form->showLinkedObjectBlock($object, $linktoelem, $compatibleImportElementsList);
 

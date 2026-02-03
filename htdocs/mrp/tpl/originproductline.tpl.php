@@ -48,7 +48,7 @@ if ($line->fk_bom_child > 0) {
 
 ?>
 
-<!-- BEGIN PHP TEMPLATE originproductline.tpl.php -->
+<!-- BEGIN PHP TEMPLATE originproductline.tpl.php mrp -->
 <?php
 print '<tr class="oddeven'.(empty($this->tpl['strike']) ? '' : ' strikefordisabled').'">';
 // Ref or label

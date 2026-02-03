@@ -371,7 +371,7 @@ class Conf extends stdClass
 			$sql .= " ".$db->decrypt('value')." as value, entity";
 			$sql .= " FROM ".$db->prefix()."const";
 			$sql .= " WHERE entity IN (0,".$this->entity.")";
-			$sql .= " ORDER BY entity"; // This is to have entity 0 first, then entity 1 that overwrite.
+			$sql .= " ORDER BY entity ASC, rowid DESC"; // This is to have entity 0 first, then entity 1 that overwrite.
 
 			$resql = $db->query($sql);
 			if ($resql) {

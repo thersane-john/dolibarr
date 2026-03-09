@@ -202,7 +202,7 @@ function testSqlAndScriptInject($val, $type)
 	// More on https://www.owasp.org/index.php/XSS_Filter_Evasion_Cheat_Sheet
 	$inj += preg_match('/<audio/i', $val);
 	$inj += preg_match('/<embed/i', $val);
-	$inj += preg_match('/<iframe/i', $val);
+	if (! defined('NOSCANIFRAMEFORINJECTION')) $inj += preg_match('/<iframe/i', $val);
 	$inj += preg_match('/<object/i', $val);
 	$inj += preg_match('/<script/i', $val);
 	$inj += preg_match('/Set\.constructor/i', $val); // ECMA script 6

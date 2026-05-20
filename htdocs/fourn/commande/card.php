@@ -158,6 +158,13 @@ $usercanread	= ($user->hasRight("fournisseur", "commande", "lire") || $user->has
 $usercancreate	= ($user->hasRight("fournisseur", "commande", "creer") || $user->hasRight("supplier_order", "creer"));
 $usercandelete	= (($user->hasRight("fournisseur", "commande", "supprimer") || $user->hasRight("supplier_order", "supprimer")) || ($usercancreate && isset($object->status) && $object->status == $object::STATUS_DRAFT));
 
+/** SPE THERSANE */
+if ($usercandelete && ($object->status == $object::STATUS_RECEIVED_PARTIALLY || $object->status == $object::STATUS_RECEIVED_COMPLETELY)) {
+	$usercandelete = false;
+}
+/** FIN SPE THERSANE */
+
+
 // Advanced permissions
 $usercanvalidate = ((!getDolGlobalString('MAIN_USE_ADVANCED_PERMS') && !empty($usercancreate)) || (getDolGlobalString('MAIN_USE_ADVANCED_PERMS') && $user->hasRight("fournisseur", "supplier_order_advance", "validate")));
 

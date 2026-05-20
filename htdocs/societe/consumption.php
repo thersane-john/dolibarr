@@ -573,6 +573,29 @@ if ($sql_select) {
 		print '<tr class="oddeven">';
 		print '<td class="nobordernopadding nowraponall">';
 		print $documentstatic->getNomUrl(1);
+
+		/**
+		 * SPE THERSANE
+		 */
+		$contactList = $documentstatic->liste_contact();
+		if (!empty($contactList)) {
+			$listOfNames = [];
+			foreach ($contactList as $contactItem) {
+				$listOfNames[] = ucfirst($contactItem['firstname']) . ' ' . strtoupper($contactItem['lastname']);
+			}
+			$listOfNames = array_unique($listOfNames);
+			if (!empty($listOfNames)) {
+				print '<br/><small>'.reset($listOfNames).'</small>';
+
+				if (count($listOfNames) > 1) {
+					print '<small class="classfortooltip" title="'.dol_htmlentities(implode('<br/>', $listOfNames)).'">&nbsp;+&mldr;</small>';
+				}
+			}
+		}
+		/**
+		 * FIN SPE THERSANE
+		 */
+
 		print '</td>';
 		print '<td class="center" width="80">'.dol_print_date($db->jdate($objp->dateprint), 'day').'</td>';
 		// delivery planned date

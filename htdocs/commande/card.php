@@ -3631,16 +3631,24 @@ if ($action == 'create' && $usercancreate) {
 
 				// Set billed or unbilled
 				// Note: Even if module invoice is not enabled, we should be able to use button "Classified billed"
-				if ($object->status > Commande::STATUS_DRAFT && !$object->billed && $object->total_ttc >= 0) {
-					if ($usercancreate && $object->status >= Commande::STATUS_VALIDATED && !getDolGlobalString('ORDER_DISABLE_CLASSIFY_BILLED_FROM_ORDER') && !getDolGlobalString('WORKFLOW_BILL_ON_SHIPMENT')) {
-						print dolGetButtonAction('', $langs->trans('ClassifyBilled'), 'default', $_SERVER["PHP_SELF"] . '?action=classifybilled&amp;token=' . newToken() . '&amp;id=' . $object->id, '');
+				/**
+				 * SPE THERSANE
+				 */
+				if (!isModEnabled('facture') || $user->hasRight('facture', 'creer')) {
+					if ($object->status > Commande::STATUS_DRAFT && !$object->billed && $object->total_ttc >= 0) {
+						if ($usercancreate && $object->status >= Commande::STATUS_VALIDATED && !getDolGlobalString('ORDER_DISABLE_CLASSIFY_BILLED_FROM_ORDER') && !getDolGlobalString('WORKFLOW_BILL_ON_SHIPMENT')) {
+							print dolGetButtonAction('', $langs->trans('ClassifyBilled'), 'default', $_SERVER["PHP_SELF"] . '?action=classifybilled&amp;token=' . newToken() . '&amp;id=' . $object->id, '');
+						}
+					}
+					if ($object->status > Commande::STATUS_DRAFT && $object->billed) {
+						if ($usercancreate && $object->status >= Commande::STATUS_VALIDATED && !getDolGlobalString('ORDER_DISABLE_CLASSIFY_BILLED_FROM_ORDER') && !getDolGlobalString('WORKFLOW_BILL_ON_SHIPMENT')) {
+							print dolGetButtonAction('', $langs->trans('ClassifyUnBilled'), 'delete', $_SERVER["PHP_SELF"] . '?action=classifyunbilled&amp;token=' . newToken() . '&amp;id=' . $object->id, '');
+						}
 					}
 				}
-				if ($object->status > Commande::STATUS_DRAFT && $object->billed) {
-					if ($usercancreate && $object->status >= Commande::STATUS_VALIDATED && !getDolGlobalString('ORDER_DISABLE_CLASSIFY_BILLED_FROM_ORDER') && !getDolGlobalString('WORKFLOW_BILL_ON_SHIPMENT')) {
-						print dolGetButtonAction('', $langs->trans('ClassifyUnBilled'), 'delete', $_SERVER["PHP_SELF"] . '?action=classifyunbilled&amp;token=' . newToken() . '&amp;id=' . $object->id, '');
-					}
-				}
+				/**
+				 * FIN SPE THERSANE
+				 */
 
 				// Clone
 				if ($usercancreate) {

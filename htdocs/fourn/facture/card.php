@@ -1382,13 +1382,23 @@ if (empty($reshook)) {
 								}
 
 								// FIXME Missing $lines[$i]->ref_supplier and $lines[$i]->label into addline and updateline methods. They are filled when coming from order for example.
+
+								// SPE THERSANE
+								if (GETPOSTISSET('qty_' . $lines[$i]->id)) {
+									$tsQty = GETPOST('qty_' . $lines[$i]->id, 'int');
+									$tsQty = price2num($tsQty);
+								} else {
+									$tsQty = $lines[$i]->qty;
+								}
+								// END SPE THERSANE
+
 								$result = $object->addline(
 									$desc,
 									$pu,
 									$tva_tx,
 									$lines[$i]->localtax1_tx,
 									$lines[$i]->localtax2_tx,
-									$lines[$i]->qty,
+									$tsQty, // SPE THERSANE
 									$lines[$i]->fk_product,
 									$lines[$i]->remise_percent,
 									(int) $date_start,

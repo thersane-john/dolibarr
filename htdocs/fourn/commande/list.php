@@ -439,7 +439,9 @@ if (empty($reshook)) {
 				$objecttmp->mode_reglement_id = $cmd->mode_reglement_id;
 				$objecttmp->fk_project = $cmd->fk_project;
 				$objecttmp->multicurrency_code = $cmd->multicurrency_code;
-				$objecttmp->ref_supplier = !empty($cmd->ref_supplier) ? $cmd->ref_supplier : $default_ref_supplier;
+				// SPE THERSANE
+				$objecttmp->ref_supplier = '';//!empty($cmd->ref_supplier) ? $cmd->ref_supplier : $default_ref_supplier;
+				// FIN SPE THERSANE
 				$default_ref_supplier += 1;
 
 				$datefacture = dol_mktime(12, 0, 0, GETPOSTINT('remonth'), GETPOSTINT('reday'), GETPOSTINT('reyear'));
@@ -450,6 +452,12 @@ if (empty($reshook)) {
 				$objecttmp->date = $datefacture;
 				$objecttmp->origin = 'order_supplier';
 				$objecttmp->origin_id = (int) $id_order;
+
+				// SPE THERSANE
+				if (!empty($objecttmp->cond_reglement_id)) {
+					$objecttmp->date_echeance = $objecttmp->calculate_date_lim_reglement();
+				}
+				// FIN SPE THERSANE
 
 				$res = $objecttmp->create($user);
 

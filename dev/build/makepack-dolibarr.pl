@@ -60,9 +60,19 @@ my %ALTERNATEPATH = (
 );
 
 my $RPMSUBVERSION = "auto";    # auto use value found into BUILD
+my $RPMDIR = "$ENV{HOME}/rpmbuild";	# by default
 if ( -d "/usr/src/redhat" )   { $RPMDIR = "/usr/src/redhat"; }      # redhat
 if ( -d "/usr/src/packages" ) { $RPMDIR = "/usr/src/packages"; }    # opensuse
-if ( -d "/usr/src/RPM" )      { $RPMDIR = "/usr/src/RPM"; }         # mandrake
+
+if ( ! -d "$RPMDIR/SOURCES" ) {
+	mkdir("$RPMDIR/SOURCES");
+	if ( ! -d "$RPMDIR/SOURCES" ) {
+		print "Failed to create dir $RPMDIR/SOURCES\n";
+		sleep 2;
+		exit 1;
+	}
+}
+
 
 use vars qw/ $REVISION $VERSION /;
 my $VERSION = "4.0";
@@ -77,7 +87,7 @@ $DIR ||= '.';
 $DIR =~ s/([^\/\\])[\\\/]+$/$1/;
 
 $SOURCE = "$DIR/../..";
-$DESTI  = "$SOURCE/build";
+$DESTI  = "$SOURCE/dev/build";
 if ( $SOURCE !~ /^\// && $SOURCE !~ /^[a-z]:/i ) {
 	print
 	  "Error: Launch the script $PROG.$Extension with its full path from /.\n";
@@ -203,10 +213,10 @@ while (<$IN>) {
 	}
 }
 close $IN;
-open( my $IN2, "<", $SOURCE . "/htdocs/filefunc.inc.php" )
+open( my $IN2, "<", $SOURCE . "/htdocs/version.inc.php" )
   or die "Error: Can't open version file "
   . $SOURCE
-  . "/htdocs/filefunc.inc.php\n";
+  . "/htdocs/version.inc.php\n";
 while (<$IN2>) {
 	if ( $_ =~ /define\('DOL_MINOR_VERSION',\s*'([\d\.a-z\-]+)'\)/ ) {
 		$MINORVERSION = $1;
@@ -389,7 +399,7 @@ else {
 $atleastonerpm = 0;
 foreach my $target ( sort keys %CHOOSEDTARGET ) {
 	if ( $target =~ /RPM/i ) {
-		if ( $atleastonerpm && ( $DESTI eq "$SOURCE/build" ) ) {
+		if ( $atleastonerpm && ( $DESTI eq "$SOURCE/dev/build" ) ) {
 			print
 "Error: You asked creation of several rpms. Because all rpm have same name, you must defined an environment variable DESTI to tell packager where it can create subdirs for each generated package.\n";
 			exit;
@@ -625,10 +635,8 @@ if ($nboftargetok) {
 				  . $BUILD . '"' . "\n";
 				$ret =
 `git tag -a -f -m "$MAJOR.$MINOR.$BUILD" "$MAJOR.$MINOR.$BUILD"`;
-				print 'Run git push '
-				  . $GITREMOTENAME
-				  . ' -f "$MAJOR.$MINOR.$BUILD"' . "\n";
-				$ret = `git push $GITREMOTENAME -f -"$MAJOR.$MINOR.$BUILD"`;
+				print "Run git push $GITREMOTENAME -f '$MAJOR.$MINOR.$BUILD'\n";
+				$ret = `git push $GITREMOTENAME -f "$MAJOR.$MINOR.$BUILD"`;
 
 				#$ret=`git push -f origin "$MAJOR.$MINOR.$BUILD"`;
 			}
@@ -669,6 +677,7 @@ if ($nboftargetok) {
 		$ret = `rm -fr $BUILDROOT/$PROJECT/.phpunit.result.cache`;
 		$ret = `rm -fr $BUILDROOT/$PROJECT/.project`;
 		$ret = `rm -fr $BUILDROOT/$PROJECT/.pydevproject`;
+		$ret = `rm -f  $BUILDROOT/$PROJECT/.pyproject.toml`;
 		$ret = `rm -fr $BUILDROOT/$PROJECT/.settings`;
 		$ret = `rm -fr $BUILDROOT/$PROJECT/.scrutinizer.yml`;
 		$ret = `rm -fr $BUILDROOT/$PROJECT/.stickler.yml`;
@@ -713,6 +722,8 @@ if ($nboftargetok) {
 
 		$ret = `rm -fr $BUILDROOT/$PROJECT/htdocs/install/mssql`;
 		$ret = `rm -fr $BUILDROOT/$PROJECT/htdocs/install/sqlite3`;
+
+		$ret = `rm -fr $BUILDROOT/$PROJECT/htdocs/install/install.forced.php`;
 
 		$ret = `rm -fr $BUILDROOT/$PROJECT/node_modules`;
 
@@ -1048,6 +1059,7 @@ if ($nboftargetok) {
 			if ( $RPMDIR eq "" ) { $RPMDIR = $ENV{'HOME'} . "/rpmbuild"; }
 
 			print "Version is $MAJOR.$MINOR.$REL1-$RPMSUBVERSION\n";
+			print "RPMDIR = $RPMDIR\n";
 
 			print "Remove target " . $FILENAMERPM . "...\n";
 			unlink( "$NEWDESTI/" . $FILENAMERPM );

@@ -1041,7 +1041,7 @@ class Commande extends CommonOrder
 		$sql .= ", multicurrency_tx";
 		$sql .= ", import_key";
 		$sql .= ")";
-		$sql .= " VALUES ('(PROV)', ".((int) $this->socid).", '".$this->db->idate($this->date_creation)."', ".((int) $user->id);
+		$sql .= " VALUES ('(PROV)', ".((int) $this->socid).", '".$this->db->idate($this->date_creation)."', ".($user->id > 0 ? ((int) $user->id) : "null");
 		$sql .= ", ".($this->fk_project > 0 ? ((int) $this->fk_project) : "null");
 		$sql .= ", '".$this->db->idate($date)."'";
 		$sql .= ", ".($this->source >= 0 && $this->source != '' ? $this->db->escape((string) $this->source) : 'null');
@@ -1798,6 +1798,9 @@ class Commande extends CommonOrder
 			$this->line->total_localtax2 = (float) $total_localtax2;
 			$this->line->total_ttc = (float) $total_ttc;
 			$this->line->special_code = $special_code;
+			if (empty($qty) && empty($special_code)) {
+				$this->line->special_code = 3;
+			}
 			$this->line->origin = $origin;
 			$this->line->origin_id = $origin_id;
 			$this->line->fk_parent_line = $fk_parent_line;
@@ -3159,8 +3162,11 @@ class Commande extends CommonOrder
 			if (empty($remise_percent)) {
 				$remise_percent = 0;
 			}
-			if (empty($special_code) || $special_code == 3) {
-				$special_code = 0;
+			if (empty($qty) && empty($special_code)) {
+				$special_code = 3; // Set option tag
+			}
+			if (!empty($qty) && $special_code == 3) {
+				$special_code = 0; // Remove option tag
 			}
 			if (empty($ref_ext)) {
 				$ref_ext = '';

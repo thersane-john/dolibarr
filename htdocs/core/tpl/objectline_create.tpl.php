@@ -764,6 +764,7 @@ if (!empty($usemargins) && $user->hasRight('margins', 'creer')) {
 				jQuery("#price_ttc").val('');
 				jQuery("#multicurrency_subprice").val('');
 				jQuery("#multicurrency_price_ht").val('');
+				jQuery("#multicurrency_price_ttc").val('');
 			}
 		});
 
@@ -773,6 +774,7 @@ if (!empty($usemargins) && $user->hasRight('margins', 'creer')) {
 				jQuery("#price_ht").val('');
 				jQuery("#multicurrency_subprice").val('');
 				jQuery("#multicurrency_price_ht").val('');
+				jQuery("#multicurrency_price_ttc").val('');
 			}
 		});
 		jQuery("#multicurrency_subprice").keyup(function(event) {
@@ -780,6 +782,7 @@ if (!empty($usemargins) && $user->hasRight('margins', 'creer')) {
 			if (event.which != 9 && (event.which < 37 || event.which > 40) && jQuery("#multicurrency_subprice").val() != '') {
 				jQuery("#price_ht").val('');
 				jQuery("#price_ttc").val('');
+				jQuery("#multicurrency_price_ttc").val('');
 			}
 		});
 		jQuery("#multicurrency_price_ht").keyup(function(event) {
@@ -787,6 +790,15 @@ if (!empty($usemargins) && $user->hasRight('margins', 'creer')) {
 			if (event.which != 9 && (event.which < 37 || event.which > 40) && jQuery("#multicurrency_price_ht").val() != '') {
 				jQuery("#price_ht").val('');
 				jQuery("#price_ttc").val('');
+				jQuery("#multicurrency_price_ttc").val('');
+			}
+		});
+		jQuery("#multicurrency_price_ttc").keyup(function(event) {
+			// console.log(event.which);		// discard event tag and arrows
+			if (event.which != 9 && (event.which < 37 || event.which > 40) && jQuery("#multicurrency_price_ttc").val() != '') {
+				jQuery("#price_ht").val('');
+				jQuery("#price_ttc").val('');
+				jQuery("#multicurrency_price_ht").val('');
 			}
 		});
 
@@ -962,13 +974,20 @@ if (!empty($usemargins) && $user->hasRight('margins', 'creer')) {
 									<?php
 								} ?>
 							}
-							// Set vat rate if field is an input box
-							$('#tva_tx').val(tva_tx);
-							// Set vat rate by selecting the combo
-							//$('#tva_tx option').val(tva_tx);	// This is bugged, it replaces the vat key of all options
-							$('#tva_tx option').removeAttr('selected');
-							console.log("stringforvatrateselection="+stringforvatrateselection+" -> value of option label for this key="+$('#tva_tx option[value="'+stringforvatrateselection+'"]').val());
-							$('#tva_tx option[value="'+stringforvatrateselection+'"]').prop('selected', true);
+							// Set vat rate: handle both input box and combo cases
+							if ($('#tva_tx option').length) {
+								// It is a combo: try exact match first (rate + code), fallback to numeric match
+								if ($('#tva_tx option[value="' + stringforvatrateselection + '"]').length) {
+									$('#tva_tx').val(stringforvatrateselection);
+								} else {
+									$('#tva_tx option').filter(function () {
+										return parseFloat($(this).val()) === parseFloat(tva_tx);
+									}).first().prop('selected', true);
+								}
+							} else {
+								// It is an input box
+								$('#tva_tx').val(tva_tx);
+							}
 
 								<?php
 								if (getDolGlobalInt('PRODUIT_AUTOFILL_DESC') == 1) {
@@ -1157,7 +1176,8 @@ if (!empty($usemargins) && $user->hasRight('margins', 'creer')) {
 
 
 			// Deal with supplier ref price (idprodfournprice = int)
-			if (jQuery('#idprodfournprice').val() > 0)
+			var supplierVal = jQuery('#idprodfournprice').val();
+			if (supplierVal && supplierVal !== '-1' && (supplierVal > 0 || supplierVal.indexOf('idprod_') === 0))
 			{
 				console.log("objectline_create.tpl #idprodfournprice is an ID > 0, so we set some properties into page");
 

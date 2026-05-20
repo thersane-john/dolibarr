@@ -288,6 +288,7 @@ if (empty($reshook)) {
 	if (($action == 'update_price' || $action == 'update_level_price') && !$cancel && $permissiontoadd) {
 		$error = 0;
 		$pricestoupdate = array();
+		$object->oldcopy = dol_clone($object, 1);	// when calling ->update later we need to call method on ->oldcopy so we clone using param 1
 
 		$psq = GETPOSTINT('psqflag');
 
@@ -689,7 +690,7 @@ if (empty($reshook)) {
 
 	if ($action == 'delete_all_price_by_qty' && $permissiontoadd) {
 		$priceid = GETPOSTINT('priceid');
-		if (!empty($rowid)) {
+		if (!empty($priceid)) {
 			$sql = "DELETE FROM ".MAIN_DB_PREFIX."product_price_by_qty";
 			$sql .= " WHERE fk_product_price = ".((int) $priceid);
 
@@ -1277,7 +1278,7 @@ if (getDolGlobalString('PRODUIT_MULTIPRICES') || getDolGlobalString('PRODUIT_CUS
 				$sql2  = "SELECT";
 				$sql2 .= " fk_object";
 				foreach ($extralabels as $key => $value) {
-					$sql2 .= ", ".$key;
+					$sql2 .= ", ".$db->sanitize($key);
 				}
 				$sql2 .= " FROM ".MAIN_DB_PREFIX."product_price_extrafields";
 				$sql2 .= " WHERE fk_object = ".((int) $lineid->rowid);
@@ -1921,7 +1922,7 @@ if (($action == 'edit_price' || $action == 'edit_level_price') && $object->getRi
 					$sql  = "SELECT";
 					$sql .= " fk_object";
 					foreach ($extralabels as $key => $value) {
-						$sql .= ", ".$key;
+						$sql .= ", ".$db->sanitize($key);
 					}
 					$sql .= " FROM ".MAIN_DB_PREFIX."product_price_extrafields";
 					$sql .= " WHERE fk_object = ".((int) $lineid->rowid);
@@ -2238,7 +2239,7 @@ if (getDolGlobalString('PRODUIT_CUSTOMER_PRICES') || getDolGlobalString('PRODUIT
 				$sql  = "SELECT";
 				$sql .= " fk_object";
 				foreach ($extralabels as $key => $value) {
-					$sql .= ", ".$key;
+					$sql .= ", ".$db->sanitize($key);
 				}
 				$sql .= " FROM ".MAIN_DB_PREFIX."product_customer_price_extrafields";
 				$sql .= " WHERE fk_object = ".((int) $prodcustprice->id);
@@ -2668,7 +2669,7 @@ if (getDolGlobalString('PRODUIT_CUSTOMER_PRICES') || getDolGlobalString('PRODUIT
 					$sql  = "SELECT";
 					$sql .= " fk_object";
 					foreach ($extralabels as $key => $value) {
-						$sql .= ", ".$key;
+						$sql .= ", ".$db->sanitize($key);
 					}
 					$sql .= " FROM ".MAIN_DB_PREFIX."product_customer_price_extrafields";
 					$sql .= " WHERE fk_object = ".((int) $line->id);
@@ -2765,9 +2766,9 @@ if ((!getDolGlobalString('PRODUIT_CUSTOMER_PRICES') || $action == 'showlog_defau
 			// We add it to fix this if not (trouble with old versions)
 			// We emulate the change of the price from interface with the same value than the one into table llx_product
 			if (getDolGlobalString('PRODUIT_MULTIPRICES') || getDolGlobalString('PRODUIT_CUSTOMER_PRICES_AND_MULTIPRICES')) {
-				$ret = $object->updatePrice(($object->multiprices_base_type[1] == 'TTC' ? $object->multiprices_ttc[1] : $object->multiprices[1]), $object->multiprices_base_type[1], $user, (empty($object->multiprices_tva_tx[1]) ? 0 : $object->multiprices_tva_tx[1]), ($object->multiprices_base_type[1] == 'TTC' ? $object->multiprices_min_ttc[1] : $object->multiprices_min[1]), 1);
+				$ret = $object->updatePrice(($object->multiprices_base_type[1] == 'TTC' ? $object->multiprices_ttc[1] : $object->multiprices[1]), $object->multiprices_base_type[1], $user, (empty($object->multiprices_tva_tx[1]) ? 0 : $object->multiprices_tva_tx[1]), ($object->multiprices_base_type[1] == 'TTC' ? $object->multiprices_min_ttc[1] : $object->multiprices_min[1]), 1, 0, 0, 0, array(), $object->default_vat_code);
 			} else {
-				$ret = $object->updatePrice(($object->price_base_type == 'TTC' ? $object->price_ttc : $object->price), $object->price_base_type, $user, $object->tva_tx, ($object->price_base_type == 'TTC' ? $object->price_min_ttc : $object->price_min));
+				$ret = $object->updatePrice(($object->price_base_type == 'TTC' ? $object->price_ttc : $object->price), $object->price_base_type, $user, $object->tva_tx, ($object->price_base_type == 'TTC' ? $object->price_min_ttc : $object->price_min), 0, $object->tva_npr, 0, 0, array(), $object->default_vat_code);
 			}
 
 			if ($ret < 0) {

@@ -322,7 +322,8 @@ if (empty($reshook)) {
 		// Add the payment
 		if (!$error && $res >= 0) {
 			$remaintopay = $invoice->getRemainToPay();
-			if ($remaintopay > 0) {
+			// Credit notes have negative remaintopay; regular invoices have positive
+			if (($remaintopay > 0 && $invoice->type != Facture::TYPE_CREDIT_NOTE) || ($remaintopay < 0 && $invoice->type == Facture::TYPE_CREDIT_NOTE)) {
 				$payment = new Paiement($db);
 
 				$payment->datepaye = $now;
@@ -341,7 +342,7 @@ if (empty($reshook)) {
 
 				$payment->paiementid = $paiementid;
 				$payment->paiementcode = $paycode;
-				$payment->num_payment = $invoice->ref;
+				$payment->num_payment = '';
 
 				if ($pay != "delayed") {
 					$res = $payment->create($user);		// This record payment and regenerate the PDF
@@ -2018,7 +2019,7 @@ if ($placeid > 0) {
 				}
 				$htmlsupplements[$line->fk_parent_line] .= '>';
 				$htmlsupplements[$line->fk_parent_line] .= '<td class="left">';
-				$htmlsupplements[$line->fk_parent_line] .= img_picto('', 'rightarrow');
+				$htmlsupplements[$line->fk_parent_line] .= img_picto('', 'rightarrow.png');
 				if ($line->product_label) {
 					$htmlsupplements[$line->fk_parent_line] .= $line->product_label;
 				}

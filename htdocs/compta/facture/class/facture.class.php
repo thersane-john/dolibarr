@@ -564,19 +564,13 @@ class Facture extends CommonInvoice
 			$previousdaynextdatewhen = null;
 
 			if ($originaldatewhen) {
-				if ($_facrec->rule_for_lines_dates == 'prepaid') {
-					$nextdatewhen = dol_time_plus_duree($originaldatewhen, (int) $_facrec->frequency, $_facrec->unit_frequency);
-				}
-
-				if ($_facrec->rule_for_lines_dates == 'postpaid') {
+				if ($_facrec->rule_for_lines_dates == 'postpaid') {		// Bugged feature, should use different variable nameas we store something different.
 					$previousdaynextdatewhen = dol_time_plus_duree($originaldatewhen, -1, 'd');
-				} elseif ($nextdatewhen) {
+					$originaldatewhen = dol_time_plus_duree($originaldatewhen, -$_facrec->frequency, $_facrec->unit_frequency);
+				} else {
+					$nextdatewhen = dol_time_plus_duree($originaldatewhen, (int) $_facrec->frequency, $_facrec->unit_frequency);
 					$previousdaynextdatewhen = dol_time_plus_duree($nextdatewhen, -1, 'd');
 				}
-
-				$originaldatewhen = $_facrec->rule_for_lines_dates == 'postpaid'
-					? dol_time_plus_duree($originaldatewhen, -$_facrec->frequency, $_facrec->unit_frequency)
-					: $originaldatewhen;
 			}
 
 			// Define thirdparty
@@ -1185,6 +1179,9 @@ class Facture extends CommonInvoice
 		// Source invoice load
 		$facture = new Facture($this->db);
 
+		// Avoid updating the row ranks
+		$facture->context['createfromclone'] = 1;
+
 		// Retrieve all extrafield
 		// fetch optionals attributes and labels
 		$this->fetch_optionals();
@@ -1362,6 +1359,9 @@ class Facture extends CommonInvoice
 			}
 
 			$object->lines[$i]->ref_ext = ''; // Do not clone ref_ext
+
+			// Do not clone accountancy ventilation: a cloned invoice must reappear in "to dispatch" list
+			$object->lines[$i]->fk_code_ventilation = 0;
 		}
 
 		// Create clone
@@ -1425,6 +1425,9 @@ class Facture extends CommonInvoice
 		// Closed order
 		$this->date = dol_now();
 		$this->source = 0;
+
+		// Avoid updating the row ranks
+		$this->context['createfromclone'] = 1;
 
 		$num = count($object->lines);
 		for ($i = 0; $i < $num; $i++) {
@@ -4259,7 +4262,9 @@ class Facture extends CommonInvoice
 			$pu_ht_devise = (float) price2num($pu_ht_devise);
 			$pu_ttc = (float) price2num($pu_ttc);
 			$pa_ht = price2num($pa_ht); // do not convert to float here, it breaks the functioning of $pa_ht_isemptystring
-
+			if (strpos((string) $txtva, '*') !== false) {
+				$info_bits |= 1;
+			}
 			if (!preg_match('/\((.*)\)/', (string) $txtva)) {
 				$txtva = price2num($txtva); // $txtva can have format '5.0(XXX)' or '5'
 			}
@@ -4580,6 +4585,9 @@ class Facture extends CommonInvoice
 			$pu_ht_devise = (float) price2num($pu_ht_devise);
 			$pa_ht = price2num($pa_ht); // do not convert to float here, it breaks the functioning of $pa_ht_isemptystring
 
+			if (strpos((string) $txtva, '*') !== false) {
+				$info_bits |= 1;
+			}
 			if (!preg_match('/\((.*)\)/', (string) $txtva)) {
 				$txtva = price2num($txtva); // $txtva can have format '5.0(XXX)' or '5'
 			}
@@ -4810,7 +4818,7 @@ class Facture extends CommonInvoice
 	 * Update invoice line with percentage
 	 *
 	 * @param  FactureLigne $line       	Invoice line
-	 * @param  int          $percent    	Percentage
+	 * @param  int|float    $percent    	Percentage
 	 * @param  boolean      $update_price   Update object price
 	 * @return void
 	 */

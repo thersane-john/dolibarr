@@ -316,15 +316,26 @@ class modProjet extends DolibarrModules
 			}
 		}
 		// End add extra fields
-		$this->import_fieldshidden_array[$r] = array('t.fk_user_creat'=>'user->id', 'extra.fk_object'=>'lastrowid-'.MAIN_DB_PREFIX.'projet'); // aliastable.field => ('user->id' or 'lastrowid-'.tableparent)
+		$this->import_fieldshidden_array[$r] = array('t.fk_user_creat'=>'user->id', 't.fk_user_modif'=>'user->id', 'extra.fk_object'=>'lastrowid-'.MAIN_DB_PREFIX.'projet'); // aliastable.field => ('user->id' or 'lastrowid-'.tableparent)
 		$this->import_convertvalue_array[$r] = array(
-			't.ref' => array('rule' => 'getrefifauto', 'class' => getDolGlobalString('PROJECT_ADDON', 'mod_project_simple'), 'path' => "/core/modules/project/".getDolGlobalString('PROJECT_ADDON', 'mod_project_simple').'.php'),
+			't.ref' => array(
+				'rule' => 'getrefifauto',
+				'class' => getDolGlobalString('PROJECT_ADDON', 'mod_project_simple'),
+				'path' => "/core/modules/project/".getDolGlobalString('PROJECT_ADDON', 'mod_project_simple').'.php'
+			),
 			't.fk_soc' => array(
 				'rule'    => 'fetchidfromref',
 				'file'    => '/societe/class/societe.class.php',
 				'class'   => 'Societe',
 				'method'  => 'fetch',
 				'element' => 'ThirdParty'
+			),
+			't.fk_opp_status' => array(
+				'rule'    => 'fetchidfromcodeid',
+				'file'    => '/core/class/cleadstatus.class.php',
+				'class'   => 'CLeadStatus',
+				'method'  => 'fetch',
+				'dict' => 'DictionaryOpportunityStatus'
 			),
 		);
 		//$this->import_convertvalue_array[$r]=array('s.fk_soc'=>array('rule'=>'lastrowid',table='t');
@@ -374,6 +385,11 @@ class modProjet extends DolibarrModules
 	public function init($options = '')
 	{
 		global $conf, $langs;
+
+		$result = $this->_load_tables('/install/mysql/', 'project');
+		if ($result < 0) {
+			return -1; // Do not activate module if error 'not allowed' returned when loading module SQL queries (the _load_table run sql with run_sql with the error allowed parameter set to 'default')
+		}
 
 		// Permissions
 		$this->remove($options);

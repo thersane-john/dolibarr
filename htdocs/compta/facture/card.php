@@ -41,7 +41,7 @@
  * \brief 	Page to create/see an invoice
  */
 
-// Libraries
+// Load Dolibarr environment
 require '../../main.inc.php';
 /**
  * @var Conf $conf
@@ -91,14 +91,15 @@ if (isModEnabled('margin')) {
 }
 
 // General $Variables
-$id = (GETPOSTINT('id') ? GETPOSTINT('id') : GETPOSTINT('facid'));    // For backward compatibility
-$ref = GETPOST('ref', 'alpha');
-$socid = GETPOSTINT('socid');
 $action = GETPOST('action', 'aZ09');
 $confirm = GETPOST('confirm', 'alpha');
 $cancel = GETPOST('cancel', 'alpha');
 $backtopage = GETPOST('backtopage', 'alpha');					// if not set, a default page will be used
 $backtopageforcancel = GETPOST('backtopageforcancel', 'alpha');	// if not set, $backtopage will be used
+
+$id = (GETPOSTINT('id') ? GETPOSTINT('id') : GETPOSTINT('facid'));    // For backward compatibility
+$ref = GETPOST('ref', 'alpha');
+$socid = GETPOSTINT('socid');
 $lineid = GETPOSTINT('lineid');
 $origin = GETPOST('origin', 'alpha');
 $originid = (GETPOSTINT('originid') ? GETPOSTINT('originid') : GETPOSTINT('origin_id')); // For backward compatibility
@@ -670,9 +671,11 @@ if (empty($reshook)) {
 			}
 
 			if (!$error) {
-				$newremaintopay = $object->getRemainToPay(0);
-				if ($newremaintopay == 0) {
-					$object->setPaid($user);
+				if ($object->status == Facture::STATUS_VALIDATED) {
+					$newremaintopay = $object->getRemainToPay(0);
+					if ($newremaintopay == 0) {
+						$object->setPaid($user);
+					}
 				}
 			}
 		}
@@ -1058,8 +1061,12 @@ if (empty($reshook)) {
 
 			$error = 0;
 
-			if ($object->type == Facture::TYPE_STANDARD || $object->type == Facture::TYPE_REPLACEMENT || $object->type == Facture::TYPE_SITUATION) {
-				// If we're on a standard invoice, we have to get excess received to create a discount in TTC without VAT
+
+			// Create a discount that is the amount of the excess received
+			if ($object->type == Facture::TYPE_STANDARD || $object->type == Facture::TYPE_REPLACEMENT || $object->type == Facture::TYPE_SITUATION
+				|| $object->type == Facture::TYPE_DEPOSIT) {
+				// If we have an excess received that need to create a discount in TTC without VAT
+				$discount->description = '(EXCESS RECEIVED)';
 
 				// Total payments
 				$sql = 'SELECT SUM(pf.amount) as total_paiements';
@@ -1091,17 +1098,28 @@ if (empty($reshook)) {
 					dol_print_error($db);
 				}
 
-				$discount->amount_ht = $discount->amount_ttc = $total_paiements + $total_creditnote_and_deposit - $object->total_ttc;
+				$discount->amount_ttc = price2num($total_paiements + $total_creditnote_and_deposit - $object->total_ttc, 'MT');
 				$discount->amount_tva = 0;
+				$discount->amount_ht = $discount->amount_ttc;
 				$discount->tva_tx = 0;
 				$discount->vat_src_code = '';
 
-				$result = $discount->create($user);
-				if ($result < 0) {
-					$error++;
+				if ($discount->amount_ttc > 0) {
+					$result = $discount->create($user);
+					if ($result < 0) {
+						$error++;
+					}
 				}
 			}
+
+			// Create a discount that is the amount of the invoice
 			if ($object->type == Facture::TYPE_CREDIT_NOTE || $object->type == Facture::TYPE_DEPOSIT) {
+				if ($object->type == Facture::TYPE_CREDIT_NOTE) {
+					$discount->description = '(CREDIT_NOTE)';
+				} else {
+					$discount->description = '(DEPOSIT)';
+				}
+
 				foreach ($amount_ht as $tva_tx => $xxx) {
 					if ($object->type == Facture::TYPE_CREDIT_NOTE) {
 						$discount->amount_ht = -((float) $amount_ht[$tva_tx]);
@@ -1152,18 +1170,23 @@ if (empty($reshook)) {
 			}
 
 			if (empty($error)) {
-				if ($object->type != Facture::TYPE_DEPOSIT) {
-					// Set invoice as paid
-					$result = $object->setPaid($user);
+				// Set invoice as paid, unless it's a deposit converted to credit without any payment received
+				// (option DEPOSIT_AS_CREDIT_AVAILABLE_EVEN_UNPAID allows creating the discount/credit even if the deposit
+				// has not been paid yet; in that case we must NOT mark it as paid since no payment was actually received)
+				$skipSetPaid = ($object->type == Facture::TYPE_DEPOSIT && getDolGlobalInt('DEPOSIT_AS_CREDIT_AVAILABLE_EVEN_UNPAID') && price2num($object->getSommePaiement(), 'MT') == 0);
+
+				if ($skipSetPaid) {
+					$object->fetch($object->id);    // Reload properties
+					$db->commit();
+				} else {
+					$result = $object->setPaid($user);  // We can close the invoice. Even if we got an excess received, it is now into discounts.
 					if ($result >= 0) {
-						$object->fetch($object->id);	// Reload properties
+						$object->fetch($object->id);    // Reload properties
 						$db->commit();
 					} else {
 						setEventMessages($object->error, $object->errors, 'errors');
 						$db->rollback();
 					}
-				} else {
-					$db->commit();
 				}
 			} else {
 				setEventMessages($discount->error, $discount->errors, 'errors');
@@ -2275,6 +2298,9 @@ if (empty($reshook)) {
 					$newlang = GETPOST('lang_id', 'aZ09');
 				}
 				if (getDolGlobalInt('MAIN_MULTILANGS') && empty($newlang)) {
+					if (empty($object->thirdparty)) {
+						$object->fetch_thirdparty();
+					}
 					$newlang = $object->thirdparty->default_lang;
 				}
 				if (!empty($newlang)) {
@@ -2620,11 +2646,17 @@ if (empty($reshook)) {
 					$pu_ttc = price2num((float) $pu_ht * (1 + ($tmpvat / 100)), 'MU');
 				} elseif (!empty($price_ht_devise) || $price_ht_devise === '0') {
 					$pu_ht_devise = price2num($price_ht_devise, 'MU');
+					$pu_ttc_devise = (float) price2num((float) $pu_ht_devise * (1 + ((float) $tmpvat / 100)), 'MU');
 					$pu_ht = '';
 					$pu_ttc = '';
 				} elseif (!empty($price_ttc) || $price_ttc === '0') {
 					$pu_ttc = price2num($price_ttc, 'MU');
 					$pu_ht = price2num((float) $pu_ttc / (1 + ($tmpvat / 100)), 'MU');
+				} elseif (!empty($price_ttc_devise) || (string) $price_ttc_devise === '0') {
+					$pu_ttc_devise = (float) price2num($price_ttc_devise, 'MU');
+					$pu_ht_devise = (float) price2num((float) $pu_ttc_devise / (1 + ((float) $tmpvat / 100)), 'MU');
+					$pu_ht = '';
+					$pu_ttc = '';
 				} elseif ($tmpvat != $tmpprodvat) {
 					// Is this still used ?
 					if ($price_base_type != 'HT') {
@@ -5031,11 +5063,11 @@ if ($action == 'create') {
 					break;
 				case -7:
 					// Already validated
-					setEventMessages($langs->trans("DisabledBecauseVersionProtected"), null, 'errors');
+					setEventMessages($langs->trans("DisabledBecauseVersionProtected").(empty($object->error) ? '' : ': '.$object->error), null, 'errors');
 					break;
 				default:
 					// Other error
-					setEventMessages($langs->trans("DisabledBecauseNotErasable"), null, 'errors');
+					setEventMessages($langs->trans("DisabledBecauseNotEditable").(empty($object->error) ? ': UnknownReason' : ': '.$object->error), null, 'errors');
 					break;
 			}
 			$oktomodif = 0;
@@ -6728,11 +6760,11 @@ if ($action == 'create') {
 				) {
 					print '<a class="butAction classfortooltip'.($conf->use_javascript_ajax ? ' reposition' : '').'" href="'.$_SERVER["PHP_SELF"].'?facid='.$object->id.'&action=converttoreduc&token='.newToken().'" title="'.dol_escape_htmltag($langs->trans("ConfirmConvertToReduc2")).'">'.$langs->trans('ConvertToReduc').'</a>';
 				}
-				// For down payment invoice (deposit)
 
+				// For down payment invoice (deposit)
 				if ($object->type == Facture::TYPE_DEPOSIT && $usercancreate && $object->status > Facture::STATUS_DRAFT && empty($discount->id)) {
 					// We can close a down payment only if paid amount is same than amount of down payment (by definition). We can bypass this if hidden and unstable option DEPOSIT_AS_CREDIT_AVAILABLE_EVEN_UNPAID is set.
-					if (price2num($object->total_ttc, 'MT') == price2num($sumofpaymentall, 'MT') || getDolGlobalInt('DEPOSIT_AS_CREDIT_AVAILABLE_EVEN_UNPAID') || ($object->type == Facture::STATUS_ABANDONED && in_array($object->close_code, array('bankcharge', 'discount_vat', 'other')))) {
+					if (price2num($object->total_ttc, 'MT') <= price2num($sumofpaymentall, 'MT') || getDolGlobalInt('DEPOSIT_AS_CREDIT_AVAILABLE_EVEN_UNPAID') || ($object->type == Facture::STATUS_ABANDONED && in_array($object->close_code, array('bankcharge', 'discount_vat', 'other')))) {
 						print '<a class="butAction'.($conf->use_javascript_ajax ? ' reposition' : '').'" href="'.$_SERVER["PHP_SELF"].'?facid='.$object->id.'&action=converttoreduc&token='.newToken().'">'.$langs->trans('ConvertToReduc').'</a>';
 					} else {
 						print '<span class="butActionRefused classfortooltip" title="'.$langs->trans("AmountPaidMustMatchAmountOfDownPayment").'">'.$langs->trans('ConvertToReduc').'</span>';
@@ -6854,7 +6886,7 @@ if ($action == 'create') {
 			} elseif ($isErasable == -1) {
 				$htmltooltip = $langs->trans('DisabledBecauseDispatchedInBookkeeping');
 			} elseif ($isErasable <= 0) {	// Any other cases
-				$htmltooltip = $langs->trans('DisabledBecauseNotErasable');
+				$htmltooltip = $langs->trans('DisabledBecauseNotErasable').(empty($object->error) ? ': UnknownReason' : ': '.$object->error);
 			} elseif ($objectidnext) {
 				$htmltooltip = $langs->trans('DisabledBecauseReplacedInvoice');
 			}

@@ -128,8 +128,6 @@ if ($idprod > 0) {
 			$prices[] = array(
 				"id" => (int) $productSupplier->product_fourn_price_id,
 				"price" => price2num($price, '', 0),
-				"stock_theorique" => $productSupplier->stock_theorique,
-				"stock_reel" => $productSupplier->stock_reel,
 				"label" => $label,
 				"title" => $title,
 				"default" => false, // will determine selected price
@@ -221,6 +219,8 @@ if ($idprod > 0) {
 	); // For price field, we must use price2num(), for label or title, price()
 
 	$parameters = array(
+		"stock_theorique" => $producttmp->stock_theorique,
+		"stock_reel" => $producttmp->stock_reel,
 		'prices' => &$prices,
 		'idprod' => $idprod,
 		'bestpricefirst' => GETPOST('bestpricefirst')

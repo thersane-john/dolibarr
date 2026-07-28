@@ -90,12 +90,14 @@ top_httphead('application/json');
 //print '<!-- Ajax page called with url '.dol_escape_htmltag($_SERVER["PHP_SELF"]).'?'.dol_escape_htmltag($_SERVER["QUERY_STRING"]).' -->'."\n";
 
 if ($idprod > 0) {
+	$producttmp = new ProductFournisseur($db);
+	$producttmp->fetch($idprod);
 	$sorttouse = 's.nom, pfp.quantity, pfp.price';
 	if (GETPOST('bestpricefirst')) {
 		$sorttouse = 'pfp.unitprice, s.nom, pfp.quantity, pfp.price';
 	}
 
-	$productSupplierArray = $object->list_product_fournisseur_price($idprod, $sorttouse); // We list all price per supplier, and then firstly with the lower quantity. So we can choose first one with enough quantity into list.
+	$productSupplierArray = $producttmp->list_product_fournisseur_price($idprod, $sorttouse); // We list all price per supplier, and then firstly with the lower quantity. So we can choose first one with enough quantity into list.
 	if (is_array($productSupplierArray)) {
 		foreach ($productSupplierArray as $productSupplier) {
 			if (getDolGlobalInt("DISABLE_BAD_REPUTATION_PRODUCT_PRICE") && $productSupplier->supplier_reputation == "DONOTORDER") {
@@ -124,11 +126,20 @@ if ($idprod > 0) {
 			}
 
 			$prices[] = array(
-				"id" => $productSupplier->product_fourn_price_id,
+				"id" => (int) $productSupplier->product_fourn_price_id,
 				"price" => price2num($price, '', 0),
+				"stock_theorique" => $productSupplier->stock_theorique,
+				"stock_reel" => $productSupplier->stock_reel,
 				"label" => $label,
 				"title" => $title,
-
+				"default" => false, // will determine selected price
+				"currency" => $conf->currency,
+				"currencySymbol" => $langs->getCurrencySymbol($conf->currency),
+				'dataHtml' => '<strong class="form-select-option-supplier-name">'. $productSupplier->fourn_name .'</strong> : <small>'.$productSupplier->ref_supplier.'</small>
+								<span class="badge badge-dark badge-pill pull-right">'. price($price, 0, $langs, 0, 0, -1, $conf->currency).'</span>
+								<br><small>'.dol_print_date($productSupplier->fourn_date_modification).'</small>
+								<small class="pull-right">/ '. ($productSupplier->fourn_qty == 1 ? $langs->trans("Unit") : $langs->trans("Units")) .'</small>
+								',
 				// New data to allow js UX to build more interesting stuff
 				"supplierData" => [
 					'price' => (float) $productSupplier->fourn_price,
@@ -137,10 +148,12 @@ if ($idprod > 0) {
 					'qty' => (float) $productSupplier->fourn_qty,
 					'finalUnitPrice' => (float) $unitprice,
 					'finalPrice' => (float) $price,
+					"Unit" => $productSupplier->fourn_qty == 1 ? $langs->trans("Unit") : $langs->trans("Units"),
 					'socName' => $productSupplier->fourn_name,
 					'ref' => $productSupplier->ref_supplier,
 					'reputation' => $productSupplier->supplier_reputation,
 					'dateCreation' => $productSupplier->fourn_date_creation,
+					'dateModification' => $productSupplier->fourn_date_modification,
 					'deliveryTimeDays' => $productSupplier->delivery_time_days,
 				]
 			); // For price field, we must use price2num(), for label or title, price()
@@ -149,12 +162,14 @@ if ($idprod > 0) {
 
 	// After best supplier prices and before costprice
 	if (isModEnabled('stock')) {
+		$langs->load('stocks');
+		$producttmp->load_stock();
 		// Add price for pmp
-		$price = $object->pmp;
+		$price = $producttmp->pmp;
 		if (empty($price) && getDolGlobalString('PRODUCT_USE_SUB_COST_PRICES_IF_COST_PRICE_EMPTY')) {
 			// get pmp for subproducts if any
-			$object->get_sousproduits_arbo();
-			$prods_arbo = $object->get_arbo_each_prod();
+			$producttmp->get_sousproduits_arbo();
+			$prods_arbo=$producttmp->get_arbo_each_prod();
 			if (!empty($prods_arbo)) {
 				$price = 0;
 				foreach ($prods_arbo as $child) {
@@ -165,15 +180,26 @@ if ($idprod > 0) {
 			}
 		}
 
-		$prices[] = array("id" => 'pmpprice', "price" => price2num($price, 'MU'), "label" => $langs->trans("PMPValueShort").': '.price($price, 0, $langs, 0, 0, -1, $conf->currency), "title" => $langs->trans("PMPValueShort").': '.price($price, 0, $langs, 0, 0, -1, $conf->currency));  // For price field, we must use price2num(), for label or title, price()
+		$prices[] = array(
+			"id" => 'pmpprice',
+			"price" => price2num($price, 'MU'),
+			"default" => false, // will determine selected price
+			"label" => $langs->trans("PMPValueShort").': '.price($price, 0, $langs, 0, 0, -1, $conf->currency),
+			"title" => $langs->trans("PMPValueShort").': '.price($price, 0, $langs, 0, 0, -1, $conf->currency),
+			'dataHtml' => '<strong class="form-select-option-supplier-name">'.$langs->trans("PMPValueShort").'</strong>
+							<span class="badge badge-dark badge-pill pull-right">'.price($price, 0, $langs, 0, 0, 2, $conf->currency).'</span>
+							<br><small>'.$langs->trans('RealStock').' <strong>'.price($producttmp->stock_reel, 0, '', 1, 0).'</strong></small>
+							<small class="pull-right">'.$langs->trans('VirtualStock').' <strong>'.price($producttmp->stock_theorique, 0, '', 1, 0).'</strong></small>
+							'
+		);  // For price field, we must use price2num(), for label or title, price()
 	}
 
 	// Add price for costprice (at end)
-	$price = $object->cost_price;
+	$price = $producttmp->cost_price;
 	if (empty($price) && getDolGlobalString('PRODUCT_USE_SUB_COST_PRICES_IF_COST_PRICE_EMPTY')) {
 		// get costprice for subproducts if any
-		$object->get_sousproduits_arbo();
-		$prods_arbo = $object->get_arbo_each_prod();
+		$producttmp->get_sousproduits_arbo();
+		$prods_arbo=$producttmp->get_arbo_each_prod();
 		if (!empty($prods_arbo)) {
 			$price = 0;
 			foreach ($prods_arbo as $child) {
@@ -184,7 +210,15 @@ if ($idprod > 0) {
 		}
 	}
 
-	$prices[] = array("id" => 'costprice', "price" => price2num($price), "label" => $langs->trans("CostPrice").': '.price($price, 0, $langs, 0, 0, -1, $conf->currency), "title" => $langs->trans("PMPValueShort").': '.price($price, 0, $langs, 0, 0, -1, $conf->currency)); // For price field, we must use price2num(), for label or title, price()
+	$prices[] = array(
+		"id" => 'costprice',
+		"price" => price2num($price),
+		"default" => false, // will determine selected price
+		"label" => $langs->trans("CostPrice").': '.price($price, 0, $langs, 0, 0, -1, $conf->currency),
+		"title" => $langs->trans("CostPrice").': '.price($price, 0, $langs, 0, 0, -1, $conf->currency),
+		'dataHtml' => '<strong class="form-select-option-supplier-name">'.$langs->trans("CostPrice").'</strong> <span class="badge badge-dark badge-pill pull-right">'.price($price, 0, $langs, 0, 0, -1, $conf->currency).'</span>'
+
+	); // For price field, we must use price2num(), for label or title, price()
 
 	$parameters = array(
 		'prices' => &$prices,
@@ -193,6 +227,26 @@ if ($idprod > 0) {
 	);
 
 	$hookmanager->executeHooks('afterGetSupplierPrices', $parameters, $producttmp);
+
+	// Check if a default price is set
+	$defaultPriceIsSet = false;
+	$minPriceId = false;
+	$minPriceAmount = 0;
+	foreach ($prices as &$priceData) {
+		if (!empty($priceData['default'])) {
+			$defaultPriceIsSet = true;
+		}
+
+		if (is_numeric($priceData['id']) && floatval($priceData['price']) > 0 && (empty($minPriceAmount) || floatval($priceData['price']) < $minPriceAmount)) {
+			$minPriceAmount = floatval($priceData['price']);
+			$minPriceId = $priceData['id'];
+		}
+	}
+
+	// determine default price
+	if (!$defaultPriceIsSet) {
+		// TODO
+	}
 }
 
 echo json_encode($prices);

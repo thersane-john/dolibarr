@@ -3178,7 +3178,7 @@ class Form
 			$selectFieldsGrouped = ", " . $this->db->ifsql("p.stock IS NULL", '0', "p.stock") . " AS stock";
 		}
 
-		$sql = "SELECT DISTINCT";
+		$sql = "SELECT DISTINCT ";
 
 		// Add select from hooks
 		$parameters = array();

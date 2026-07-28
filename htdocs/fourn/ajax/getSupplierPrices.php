@@ -105,6 +105,8 @@ if ($idprod > 0) {
 			$prices[] = array(
 				"id" => (int) $productSupplier->product_fourn_price_id,
 				"price" => price2num($price, '', 0),
+				"stock_theorique" => $productSupplier->stock_theorique,
+				"stock_reel" => $productSupplier->stock_reel,
 				"label" => $label,
 				"title" => $title,
 				"default" => false, // will determine selected price

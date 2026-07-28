@@ -90,14 +90,12 @@ top_httphead('application/json');
 //print '<!-- Ajax page called with url '.dol_escape_htmltag($_SERVER["PHP_SELF"]).'?'.dol_escape_htmltag($_SERVER["QUERY_STRING"]).' -->'."\n";
 
 if ($idprod > 0) {
-	$producttmp = new ProductFournisseur($db);
-	$producttmp->fetch($idprod);
 	$sorttouse = 's.nom, pfp.quantity, pfp.price';
 	if (GETPOST('bestpricefirst')) {
 		$sorttouse = 'pfp.unitprice, s.nom, pfp.quantity, pfp.price';
 	}
 
-	$productSupplierArray = $producttmp->list_product_fournisseur_price($idprod, $sorttouse); // We list all price per supplier, and then firstly with the lower quantity. So we can choose first one with enough quantity into list.
+	$productSupplierArray = $object->list_product_fournisseur_price($idprod, $sorttouse); // We list all price per supplier, and then firstly with the lower quantity. So we can choose first one with enough quantity into list.
 	if (is_array($productSupplierArray)) {
 		foreach ($productSupplierArray as $productSupplier) {
 			if (getDolGlobalInt("DISABLE_BAD_REPUTATION_PRODUCT_PRICE") && $productSupplier->supplier_reputation == "DONOTORDER") {
@@ -161,13 +159,13 @@ if ($idprod > 0) {
 	// After best supplier prices and before costprice
 	if (isModEnabled('stock')) {
 		$langs->load('stocks');
-		$producttmp->load_stock();
+		$object->load_stock();
 		// Add price for pmp
-		$price = $producttmp->pmp;
+		$price = $object->pmp;
 		if (empty($price) && getDolGlobalString('PRODUCT_USE_SUB_COST_PRICES_IF_COST_PRICE_EMPTY')) {
 			// get pmp for subproducts if any
-			$producttmp->get_sousproduits_arbo();
-			$prods_arbo=$producttmp->get_arbo_each_prod();
+			$object->get_sousproduits_arbo();
+			$prods_arbo=$object->get_arbo_each_prod();
 			if (!empty($prods_arbo)) {
 				$price = 0;
 				foreach ($prods_arbo as $child) {
@@ -180,24 +178,26 @@ if ($idprod > 0) {
 
 		$prices[] = array(
 			"id" => 'pmpprice',
+			"stock_theorique" => $object->stock_theorique,
+			"stock_reel" => $object->stock_reel,
 			"price" => price2num($price, 'MU'),
 			"default" => false, // will determine selected price
 			"label" => $langs->trans("PMPValueShort").': '.price($price, 0, $langs, 0, 0, -1, $conf->currency),
 			"title" => $langs->trans("PMPValueShort").': '.price($price, 0, $langs, 0, 0, -1, $conf->currency),
 			'dataHtml' => '<strong class="form-select-option-supplier-name">'.$langs->trans("PMPValueShort").'</strong>
 							<span class="badge badge-dark badge-pill pull-right">'.price($price, 0, $langs, 0, 0, 2, $conf->currency).'</span>
-							<br><small>'.$langs->trans('RealStock').' <strong>'.price($producttmp->stock_reel, 0, '', 1, 0).'</strong></small>
-							<small class="pull-right">'.$langs->trans('VirtualStock').' <strong>'.price($producttmp->stock_theorique, 0, '', 1, 0).'</strong></small>
+							<br><small>'.$langs->trans('RealStock').' <strong>'.price($object->stock_reel, 0, '', 1, 0).'</strong></small>
+							<small class="pull-right">'.$langs->trans('VirtualStock').' <strong>'.price($object->stock_theorique, 0, '', 1, 0).'</strong></small>
 							'
 		);  // For price field, we must use price2num(), for label or title, price()
 	}
 
 	// Add price for costprice (at end)
-	$price = $producttmp->cost_price;
+	$price = $object->cost_price;
 	if (empty($price) && getDolGlobalString('PRODUCT_USE_SUB_COST_PRICES_IF_COST_PRICE_EMPTY')) {
 		// get costprice for subproducts if any
-		$producttmp->get_sousproduits_arbo();
-		$prods_arbo=$producttmp->get_arbo_each_prod();
+		$object->get_sousproduits_arbo();
+		$prods_arbo=$object->get_arbo_each_prod();
 		if (!empty($prods_arbo)) {
 			$price = 0;
 			foreach ($prods_arbo as $child) {
@@ -219,14 +219,14 @@ if ($idprod > 0) {
 	); // For price field, we must use price2num(), for label or title, price()
 
 	$parameters = array(
-		"stock_theorique" => $producttmp->stock_theorique,
-		"stock_reel" => $producttmp->stock_reel,
+		"stock_theorique" => $object->stock_theorique,
+		"stock_reel" => $object->stock_reel,
 		'prices' => &$prices,
 		'idprod' => $idprod,
 		'bestpricefirst' => GETPOST('bestpricefirst')
 	);
 
-	$hookmanager->executeHooks('afterGetSupplierPrices', $parameters, $producttmp);
+	$hookmanager->executeHooks('afterGetSupplierPrices', $parameters, $object);
 
 	// Check if a default price is set
 	$defaultPriceIsSet = false;

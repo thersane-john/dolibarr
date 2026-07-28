@@ -1256,14 +1256,14 @@ if (getDolGlobalString('PRODUIT_MULTIPRICES') || getDolGlobalString('PRODUIT_CUS
 	// Price by quantity
 	if (getDolGlobalString('PRODUIT_CUSTOMER_PRICES_BY_QTY') || getDolGlobalString('PRODUIT_CUSTOMER_PRICES_BY_QTY_MULTIPRICES')) {    // TODO Fix the form inside tr instead of td
 		print '<tr><td>'.$langs->trans("PriceByQuantity");
-		if ($object->prices_by_qty[0] == 0) {
+		if (isset($object->prices_by_qty[0]) && $object->prices_by_qty[0] == 0) {
 			print '&nbsp; <a href="'.$_SERVER['PHP_SELF'].'?id='.$object->id.'&action=activate_price_by_qty&level=1&token='.newToken().'">('.$langs->trans("Activate").')';
 		} else {
 			print '&nbsp; <a href="'.$_SERVER['PHP_SELF'].'?id='.$object->id.'&action=disable_price_by_qty&level=1&token='.newToken().'">('.$langs->trans("DisablePriceByQty").')';
 		}
 		print '</td><td>';
 
-		if ($object->prices_by_qty[0] == 1) {
+		if (isset($object->prices_by_qty[0]) && $object->prices_by_qty[0] == 1) {
 			print '<table width="50%" class="border" summary="List of quantities">';
 			print '<tr class="liste_titre">';
 			//print '<td>' . $langs->trans("PriceByQuantityRange") . '</td>';

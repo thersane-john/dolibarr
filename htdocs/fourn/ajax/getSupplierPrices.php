@@ -157,6 +157,8 @@ if ($idprod > 0) {
 
 		$prices[] = array(
 			"id" => 'pmpprice',
+			"stock_theorique" => $producttmp->stock_theorique,
+			"stock_reel" => $producttmp->stock_reel,
 			"price" => price2num($price, 'MU'),
 			"default" => false, // will determine selected price
 			"label" => $langs->trans("PMPValueShort").': '.price($price, 0, $langs, 0, 0, -1, $conf->currency),

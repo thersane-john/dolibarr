@@ -3687,20 +3687,33 @@ class Form
 		}
 
 		// Set $labltoshowhtml
+		$htmlTagSeparator = ' <span class="product_line_separator">-</span> ';
 		$labeltoshowhtml = '';
-		$labeltoshowhtml .= $objp->ref;
+		$ref = $objp->ref;
+
+		if (!empty($filterkey)) {
+			$ref = preg_replace('/(' . preg_quote($filterkey, '/') . ')/i', '<strong class="product_line_highlighted-match">$1</strong>', $ref, 1);
+		}
+
+		$labeltoshowhtml .= '<span class="product_line_ref">' . $ref . '</span>';
+
 		if (!empty($objp->custref)) {
-			$labeltoshowhtml .= ' (' . $objp->custref . ')';
+			$custref = $objp->custref;
+
+			if (!empty($filterkey)) {
+				$custref = preg_replace('/(' . preg_quote($filterkey, '/') . ')/i', '<strong class="product_line_highlighted-match">$1</strong>', $custref, 1);
+			}
+
+			$labeltoshowhtml .= ' <span class="product_line_custom-ref">(' . $custref . ')</span>';
 		}
-		if (!empty($filterkey) && $filterkey != '') {
-			$labeltoshowhtml = preg_replace('/(' . preg_quote($filterkey, '/') . ')/i', '<strong>$1</strong>', $labeltoshowhtml, 1);
-		}
+
 		if ($outbarcode) {
-			$labeltoshowhtml .= ' (' . $outbarcode . ')';
+			$labeltoshowhtml .= '  <span class="product_line_barcode">(' . $outbarcode . ')</span>';
 		}
-		$labeltoshowhtml .= ' - ' . dol_trunc($label, $maxlengtharticle);
+		$labeltoshowhtml .= $htmlTagSeparator;
+		$labeltoshowhtml .= '<span class="product_line_label">' . dol_trunc($label, $maxlengtharticle).'</span>';
 		if ($outorigin && getDolGlobalString('PRODUCT_SHOW_ORIGIN_IN_COMBO')) {
-			$labeltoshowhtml .= ' (' . getCountry($outorigin, '1') . ')';
+			$labeltoshowhtml .= ' <span class="product_line_origin>(' . getCountry($outorigin, '1') . ')</span> ';
 		}
 
 		// Stock
@@ -3711,9 +3724,9 @@ class Form
 				$labeltoshowstock .= ' - ' . $langs->trans("Stock") . ': ' . price(price2num($objp->stock, 'MS'), 0, $langs, 0, 0);
 
 				if ($objp->stock > 0) {
-					$labeltoshowhtmlstock .= ' - <span class="product_line_stock_ok">';
+					$labeltoshowhtmlstock .= $htmlTagSeparator.'<span class="product_line_stock_ok">';
 				} elseif ($objp->stock <= 0) {
-					$labeltoshowhtmlstock .= ' - <span class="product_line_stock_too_low">';
+					$labeltoshowhtmlstock .= $htmlTagSeparator.'<span class="product_line_stock_too_low">';
 				}
 				$labeltoshowhtmlstock .= $langs->transnoentities("Stock") . ': ' . price(price2num($objp->stock, 'MS'), 0, $langs, 0, 0);
 				$labeltoshowhtmlstock .= '</span>';
@@ -3728,7 +3741,7 @@ class Form
 
 					$labeltoshowstock .= ' - ' . $langs->trans("VirtualStock") . ':' . $virtualstock;
 
-					$labeltoshowhtmlstock .= ' - ' . $langs->transnoentities("VirtualStock") . ':';
+					$labeltoshowhtmlstock .= $htmlTagSeparator . $langs->transnoentities("VirtualStock") . ':';
 					if ($virtualstock > 0) {
 						$labeltoshowhtmlstock .= '<span class="product_line_stock_ok">';
 					} elseif ($virtualstock <= 0) {
@@ -3764,10 +3777,10 @@ class Form
 					$found = 1;
 					if ($objp2->price_base_type == 'HT') {
 						$labeltoshowprice .= ' - ' . price($objp2->price, 1, $langs, 0, 0, -1, $conf->currency) . ' ' . $langs->trans("HT");
-						$labeltoshowhtmlprice .= ' - ' . price($objp2->price, 0, $langs, 0, 0, -1, $conf->currency) . ' ' . $langs->transnoentities("HT");
+						$labeltoshowhtmlprice .= $htmlTagSeparator . '<span class="product_line_price">' . price($objp2->price, 0, $langs, 0, 0, -1, $conf->currency) . ' ' . $langs->transnoentities("HT").'</span>';
 					} else {
 						$labeltoshowprice .= ' - ' . price($objp2->price_ttc, 1, $langs, 0, 0, -1, $conf->currency) . ' ' . $langs->trans("TTC");
-						$labeltoshowhtmlprice .= ' - ' . price($objp2->price_ttc, 0, $langs, 0, 0, -1, $conf->currency) . ' ' . $langs->transnoentities("TTC");
+						$labeltoshowhtmlprice .= $htmlTagSeparator . '<span class="product_line_price">' . price($objp2->price_ttc, 0, $langs, 0, 0, -1, $conf->currency) . ' ' . $langs->transnoentities("TTC") . '</span>';
 					}
 					$outprice_ht = price($objp2->price);
 					$outprice_ttc = price($objp2->price_ttc);
@@ -3792,14 +3805,12 @@ class Form
 			$outdiscount = $objp->remise_percent;
 			if ($objp->quantity == 1) {
 				$labeltoshowprice .= ' - ' . price($objp->unitprice, 1, $langs, 0, 0, -1, $conf->currency) . "/";
-				$labeltoshowhtmlprice .= ' - ' . price($objp->unitprice, 0, $langs, 0, 0, -1, $conf->currency) . "/";
+				$labeltoshowhtmlprice .= $htmlTagSeparator . '<span class="product_line_unit_price">' . price($objp->unitprice, 0, $langs, 0, 0, -1, $conf->currency) . "/".$langs->transnoentities("Unit").'</span>';
 				$labeltoshowprice .= $langs->trans("Unit"); // Do not use strtolower because it breaks utf8 encoding
-				$labeltoshowhtmlprice .= $langs->transnoentities("Unit");
 			} else {
 				$labeltoshowprice .= ' - ' . price($objp->price, 1, $langs, 0, 0, -1, $conf->currency) . "/" . $objp->quantity;
-				$labeltoshowhtmlprice .= ' - ' . price($objp->price, 0, $langs, 0, 0, -1, $conf->currency) . "/" . $objp->quantity;
+				$labeltoshowhtmlprice .= $htmlTagSeparator . '<span class="product_line_unit_price">' . price($objp->price, 0, $langs, 0, 0, -1, $conf->currency) . "/" . $objp->quantity.$langs->transnoentities("Units").'</span>';
 				$labeltoshowprice .= $langs->trans("Units"); // Do not use strtolower because it breaks utf8 encoding
-				$labeltoshowhtmlprice .= $langs->transnoentities("Units");
 			}
 
 			$outprice_ht = price($objp->unitprice);
@@ -3810,11 +3821,11 @@ class Form
 		}
 		if (empty($hidepriceinlabel) && !empty($objp->quantity) && $objp->quantity >= 1) {
 			$labeltoshowprice .= " (" . price($objp->unitprice, 1, $langs, 0, 0, -1, $conf->currency) . "/" . $langs->trans("Unit") . ")"; // Do not use strtolower because it breaks utf8 encoding
-			$labeltoshowhtmlprice .= " (" . price($objp->unitprice, 0, $langs, 0, 0, -1, $conf->currency) . "/" . $langs->transnoentities("Unit") . ")"; // Do not use strtolower because it breaks utf8 encoding
+			$labeltoshowhtmlprice .= ' <span class="product_line_price">(' . price($objp->unitprice, 0, $langs, 0, 0, -1, $conf->currency) . "/" . $langs->transnoentities("Unit") . ")</span>"; // Do not use strtolower because it breaks utf8 encoding
 		}
 		if (empty($hidepriceinlabel) && !empty($objp->remise_percent) && $objp->remise_percent >= 1) {
 			$labeltoshowprice .= " - " . $langs->trans("Discount") . " : " . vatrate($objp->remise_percent) . ' %';
-			$labeltoshowhtmlprice .= " - " . $langs->transnoentities("Discount") . " : " . vatrate($objp->remise_percent) . ' %';
+			$labeltoshowhtmlprice .= $htmlTagSeparator. '<span class="product_line_discount">' . $langs->transnoentities("Discount") . " : " . vatrate($objp->remise_percent) . ' %</span>';
 		}
 
 		// Price by customer
@@ -3824,10 +3835,10 @@ class Form
 
 				if ($objp->custprice_base_type == 'HT') {
 					$labeltoshowprice .= ' - ' . price($objp->custprice, 1, $langs, 0, 0, -1, $conf->currency) . ' ' . $langs->trans("HT");
-					$labeltoshowhtmlprice .= ' - ' . price($objp->custprice, 0, $langs, 0, 0, -1, $conf->currency) . ' ' . $langs->transnoentities("HT");
+					$labeltoshowhtmlprice .= $htmlTagSeparator . ' <span class="product_line_custom_price">' . price($objp->custprice, 0, $langs, 0, 0, -1, $conf->currency) . ' ' . $langs->transnoentities("HT") . '</span>';
 				} else {
 					$labeltoshowprice .= ' - ' . price($objp->custprice_ttc, 1, $langs, 0, 0, -1, $conf->currency) . ' ' . $langs->trans("TTC");
-					$labeltoshowhtmlprice .= ' - ' . price($objp->custprice_ttc, 0, $langs, 0, 0, -1, $conf->currency) . ' ' . $langs->transnoentities("TTC");
+					$labeltoshowhtmlprice .= $htmlTagSeparator . ' <span class="product_line_custom_price">' . price($objp->custprice_ttc, 0, $langs, 0, 0, -1, $conf->currency) . ' ' . $langs->transnoentities("TTC") . '</span>';
 				}
 
 				$outprice_ht = price($objp->custprice);
@@ -3843,10 +3854,10 @@ class Form
 		if (empty($hidepriceinlabel) && !$found) {
 			if ($objp->price_base_type == 'HT') {
 				$labeltoshowprice .= ' - ' . price($objp->price, 1, $langs, 0, 0, -1, $conf->currency) . ' ' . $langs->trans("HT");
-				$labeltoshowhtmlprice .= ' - ' . price($objp->price, 0, $langs, 0, 0, -1, $conf->currency) . ' ' . $langs->transnoentities("HT");
+				$labeltoshowhtmlprice .= $htmlTagSeparator . ' <span class="product_line_default_price">' . price($objp->price, 0, $langs, 0, 0, -1, $conf->currency) . ' ' . $langs->transnoentities("HT") . '</span>';
 			} else {
 				$labeltoshowprice .= ' - ' . price($objp->price_ttc, 1, $langs, 0, 0, -1, $conf->currency) . ' ' . $langs->trans("TTC");
-				$labeltoshowhtmlprice .= ' - ' . price($objp->price_ttc, 0, $langs, 0, 0, -1, $conf->currency) . ' ' . $langs->transnoentities("TTC");
+				$labeltoshowhtmlprice .= $htmlTagSeparator . ' <span class="product_line_default_price">' . price($objp->price_ttc, 0, $langs, 0, 0, -1, $conf->currency) . ' ' . $langs->transnoentities("TTC") . '</span>';
 			}
 			$outprice_ht = price($objp->price);
 			$outprice_ttc = price($objp->price_ttc);
@@ -3867,11 +3878,11 @@ class Form
 		}
 
 		if ($stocktag == 1) {
-			$opt .= ' class="product_line_stock_ok" data-html="'.$labeltoshowhtml.$outvalUnits.$labeltoshowhtmlprice.dolPrintHTMLForAttribute($labeltoshowhtmlstock).'"';
+			$opt .= ' class="product_line_stock_ok" data-html="'.dolPrintHTMLForAttribute($labeltoshowhtml.$outvalUnits.$labeltoshowhtmlprice.$labeltoshowhtmlstock).'"';
 			//$opt .= ' class="product_line_stock_ok"';
 		}
 		if ($stocktag == -1) {
-			$opt .= ' class="product_line_stock_too_low" data-html="'.$labeltoshowhtml.$outvalUnits.$labeltoshowhtmlprice.dolPrintHTMLForAttribute($labeltoshowhtmlstock).'"';
+			$opt .= ' class="product_line_stock_too_low" data-html="'.dolPrintHTMLForAttribute($labeltoshowhtml.$outvalUnits.$labeltoshowhtmlprice.$labeltoshowhtmlstock).'"';
 			//$opt .= ' class="product_line_stock_too_low"';
 		}
 
@@ -3883,26 +3894,16 @@ class Form
 
 		// Units
 		$opt .= $outvalUnits;
-		$outval .= $outvalUnits;
+		$outval .= '<span class="product_line_unit">' . $outvalUnits . '</span>';
 
 		// Price
 		$opt .= $labeltoshowprice;
-		$outval .= $labeltoshowhtmlprice;
+		$outval .= '<span class="product_line_price_wrap">' . $labeltoshowhtmlprice . '</span>';
 
 		// Stock
 		$opt .= $labeltoshowstock;
 		$outval .= $labeltoshowhtmlstock;
 
-
-		$parameters = array('objp' => $objp);
-		$reshook = $hookmanager->executeHooks('constructProductListOption', $parameters); // Note that $action and $object may have been modified by hook
-		if (empty($reshook)) {
-			$opt .= $hookmanager->resPrint;
-		} else {
-			$opt = $hookmanager->resPrint;
-		}
-
-		$opt .= "</option>\n";
 		$optJson = array(
 			'key' => $outkey,
 			'value' => $outref,
@@ -3926,6 +3927,20 @@ class Form
 			'desctrans' => $outdesc_translated,
 			'ref_customer' => $outrefcust
 		);
+
+		$parameters = array(
+			'objp' => $objp,
+			'optJson' =>& $optJson,
+			'opt' =>& $opt
+		);
+		$reshook = $hookmanager->executeHooks('constructProductListOption', $parameters); // Note that $action and $object may have been modified by hook
+		if (empty($reshook)) {
+			$opt .= $hookmanager->resPrint;
+		} else {
+			$opt = $hookmanager->resPrint;
+		}
+
+		$opt .= "</option>\n";
 	}
 
 	// phpcs:disable PEAR.NamingConventions.ValidFunctionName.ScopeNotCamelCaps

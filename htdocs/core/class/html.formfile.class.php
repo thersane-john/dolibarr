@@ -1430,8 +1430,17 @@ class FormFile
 
 			// Show title of list of existing files
 			$morehtmlright = '';
-			if (!empty($moreoptions['showhideaddbutton']) && $conf->use_javascript_ajax) {
-				$tmpurlforbutton = 'javascript:console.log("open add file form");jQuery(".divattachnewfile").toggle(); if (!jQuery(".divattachnewfile").is(":hidden")) { jQuery(".divattachnewfile input[type=\'file\']").first().click();} void(0);';	// scope file picker click to the just-shown form to avoid triggering native file dialog twice when other input[type=file] exist on the page
+			$showAddFileBTN = !empty($moreoptions['showhideaddbutton']) && $conf->use_javascript_ajax && count($filearray) > 0 && !getDolGlobalBool('MAIN_DISPLAY_FORM_FILE_INPUT');
+			if ($showAddFileBTN) {
+				// TODO: Remove inline JavaScript from this link. Do not use "javascript:" handlers.
+				//  This must be replaced with a proper event listener in a separate JS file.
+				//  Also, implement a generic toggle UX behavior with button feedback, such as changing the icon
+				//  Suggestion for improvement: add drag-and-drop detection to automatically open .divattachnewfile.
+				//  Example: add an class or data-attribute to the link and bind the click event in a js script.
+				//  -
+				// 	Important: Do not trigger a click event on the input, as it will break the drag-and-drop functionality, forcing the user to close the prompt window before they can drag and drop files.
+				//  Suggestion of improvement : add a drag and drop detection to open .divattachnewfile
+				$tmpurlforbutton = 'javascript:console.log("open add file form");jQuery(".divattachnewfile").toggle(); void(0);';
 				$morehtmlright .= dolGetButtonTitle($langs->trans('New'), '', 'fa fa-plus-circle', $tmpurlforbutton, '', $permtoeditline);
 			}
 
@@ -1440,7 +1449,7 @@ class FormFile
 			}
 			if (!empty($moreoptions) && $moreoptions['afteruploadtitle']) {
 				print '<!-- Add form from $moreoptions[\'afteruploadtitle\'] -->';
-				print '<div class="divattachnewfile'.((!empty($moreoptions['showhideaddbutton']) && $conf->use_javascript_ajax) ? ' hidden' : '').'">'.$moreoptions['afteruploadtitle'].'</div>';
+				print '<div class="divattachnewfile'.($showAddFileBTN ? ' hidden' : '').'">'.$moreoptions['afteruploadtitle'].'</div>';
 			}
 
 			// Show the table

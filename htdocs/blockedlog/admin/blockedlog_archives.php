@@ -306,7 +306,7 @@ if (GETPOST('action') == 'export' && $user->hasRight('blockedlog', 'read')) {		/
 
 				$block_static->date_creation = $db->jdate($obj->date_creation);		// jdate(date_creation) is UTC
 
-				$block_static->module_source = $obj->module_source;
+				$block_static->module_source = $obj->module_source??'';
 
 				$block_static->amounts_taxexcl = (float) $obj->amounts_taxexcl;		// Database store value with 8 digits, we cut ending 0 them with (flow)
 				$block_static->amounts = (float) $obj->amounts;						// Database store value with 8 digits, we cut ending 0 them with (flow)
@@ -333,10 +333,10 @@ if (GETPOST('action') == 'export' && $user->hasRight('blockedlog', 'read')) {		/
 
 				$block_static->certified = ((int) ($obj->certified ?? 0) === 1);
 
-				$block_static->linktoref = $obj->linktoref;
-				$block_static->linktype = $obj->linktype;
+				$block_static->linktoref = $obj->linktoref??'';
+				$block_static->linktype = $obj->linktype??'';
 
-				$block_static->debuginfo = $obj->debuginfo;
+				$block_static->debuginfo = $obj->debuginfo??null;
 
 				//var_dump($block->id.' '.$block->signature, $block->object_data);
 				$checksignature = $block_static->checkSignature($previoushash); 	// If $previoushash is not defined, checkSignature will search it

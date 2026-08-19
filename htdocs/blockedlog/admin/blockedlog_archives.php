@@ -331,7 +331,7 @@ if (GETPOST('action') == 'export' && $user->hasRight('blockedlog', 'read')) {		/
 				$block_static->object_version = $obj->object_version;				// Not in signature
 				$block_static->object_format = $obj->object_format;					// Not in signature
 
-				$block_static->certified = ($obj->certified == 1);
+				$block_static->certified = ((int) ($obj->certified ?? 0) === 1);
 
 				$block_static->linktoref = $obj->linktoref;
 				$block_static->linktype = $obj->linktype;

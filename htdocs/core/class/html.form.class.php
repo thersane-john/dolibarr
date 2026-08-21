@@ -488,7 +488,10 @@ class Form
 			}
 			$extralanguages->fetch_name_extralanguages('societe');
 
-			if (!is_array($extralanguages->attributes[$object->element]) || empty($extralanguages->attributes[$object->element][$fieldname])) {
+			// ExtraLanguages::fetch_name_extralanguages() leaves $this->attributes empty
+			// when MAIN_USE_ALTERNATE_TRANSLATION_FOR is not configured, so PHP 8 raises
+			// 'Undefined array key' on the read below if we do not guard it (issue #34596).
+			if (empty($extralanguages->attributes[$object->element]) || !is_array($extralanguages->attributes[$object->element]) || empty($extralanguages->attributes[$object->element][$fieldname])) {
 				return ''; // No extralang field to show
 			}
 
@@ -3702,7 +3705,7 @@ class Form
 
 			if (!empty($filterkey)) {
 				$custref = preg_replace('/(' . preg_quote($filterkey, '/') . ')/i', '<strong class="product_line_highlighted-match">$1</strong>', $custref, 1);
-			}
+		}
 
 			$labeltoshowhtml .= ' <span class="product_line_custom-ref">(' . $custref . ')</span>';
 		}
@@ -5524,7 +5527,7 @@ class Form
 
 		$sql = "SELECT rowid, label, code FROM " . $this->db->prefix() . "c_units";
 		$sql .= ' WHERE active > 0';
-		if (!empty($unit_type) && getDolGlobalInt('MAIN_UNLOCK_UNIT_TYPE_SELECT')) {
+		if (!empty($unit_type)) {
 			$sql .= " AND unit_type = '" . $this->db->escape($unit_type) . "'";
 		}
 		$sql .= " ORDER BY sortorder";

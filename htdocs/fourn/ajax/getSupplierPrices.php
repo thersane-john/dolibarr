@@ -128,6 +128,11 @@ if ($idprod > 0) {
 				"price" => price2num($price, '', 0),
 				"label" => $label,
 				"title" => $title,
+				// Carry the product's default unit so the line form can preselect
+				// #units like the customer side already does for idprod (see
+				// issues #34610 for the customer side and #38636 for the
+				// supplier side).
+				"fk_unit" => $productSupplier->fk_unit,
 				"default" => false, // will determine selected price
 				"currency" => $conf->currency,
 				"currencySymbol" => $langs->getCurrencySymbol($conf->currency),

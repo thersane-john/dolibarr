@@ -3705,7 +3705,7 @@ class Form
 
 			if (!empty($filterkey)) {
 				$custref = preg_replace('/(' . preg_quote($filterkey, '/') . ')/i', '<strong class="product_line_highlighted-match">$1</strong>', $custref, 1);
-		}
+			}
 
 			$labeltoshowhtml .= ' <span class="product_line_custom-ref">(' . $custref . ')</span>';
 		}

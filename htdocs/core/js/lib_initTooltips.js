@@ -111,7 +111,14 @@ function initAjaxTooltips(root, baseUrl) {
 	$elements.off("mouseover mouseout");
 
 	$elements.on("mouseover", function(event) {
-		console.log("we will create timer for ajax call");
+
+		if (typeof Dolibarr !== undefined) {
+			Dolibarr.log("we will create timer for ajax call");
+		} else {
+			// Fallback when this file is loaded without Dolibarr JS context
+			console.log("we will create timer for ajax call");
+		}
+
 		event.stopImmediatePropagation();
 		clearTimeout($storeElem.data("openTimeoutId"));
 
@@ -152,7 +159,7 @@ function initAjaxTooltips(root, baseUrl) {
  * @param {HTMLElement|jQuery} root - Element or container to scan.
  * @param {number} dialogWidth - Width of the dialog.
  */
-function initTooltipDialogs(root, dialogWidth) {
+function initTooltipDialogs(root, dialogWidth= "auto") {
 	const $root = jQuery(root);
 
 	// Dialog elements (self + descendants)
@@ -167,9 +174,15 @@ function initTooltipDialogs(root, dialogWidth) {
 			$dialog.dialog("destroy");
 		}
 
-		console.log("init .dialog() dialogWidth="+dialogWidth);
-		if (dialogWidth == undefined) {
+		if (typeof dialogWidth === undefined) {
 			dialogWidth = "auto";
+		}
+
+		if (typeof Dolibarr !== undefined) {
+			Dolibarr.log("init .dialog() dialogWidth="+dialogWidth);
+		} else {
+			// Fallback when this file is loaded without Dolibarr JS context
+			console.log("init .dialog() dialogWidth="+dialogWidth);
 		}
 
 		$dialog.dialog({
@@ -196,7 +209,12 @@ function initTooltipDialogs(root, dialogWidth) {
 			const dolid = jQuery(this).attr("dolid");
 			if (!dolid) return false;
 
-			console.log("We click on tooltip for element with dolid="+dolid);
+			if (typeof Dolibarr !== undefined) {
+				Dolibarr.log("We click on tooltip for element with dolid="+dolid);
+			} else {
+				// Fallback when this file is loaded without Dolibarr JS context
+				console.log("We click on tooltip for element with dolid="+dolid);
+			}
 
 			const $dialog = jQuery("#idfortooltiponclick_" + dolid);
 			if ($dialog.length && $dialog.data("ui-dialog")) {

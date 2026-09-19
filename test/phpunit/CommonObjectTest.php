@@ -2,6 +2,7 @@
 /* Copyright (C) 2010 Laurent Destailleur  <eldy@users.sourceforge.net>
  * Copyright (C) 2023 Alexandre Janniaux   <alexandre.janniaux@gmail.com>
  * Copyright (C) 2024       Frédéric France             <frederic.france@free.fr>
+ * Copyright (C) 2026		MDW							<mdeweerd@users.noreply.github.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -466,6 +467,13 @@ class CommonObjectTest extends CommonClassTest
 			public $status = 0;
 			public $statut = 0;
 
+			/**
+			 * Constructor
+			 *
+			 * @param DoliDB $db     Database handler
+			 * @param string $oldProp Old property name
+			 * @param string $newProp New property name
+			 */
 			public function __construct($db, $oldProp, $newProp)
 			{
 				$this->db = $db;
@@ -662,6 +670,13 @@ class CommonObjectTest extends CommonClassTest
 			public $status = 0;
 			public $statut = 0;
 
+			/**
+			 * Constructor
+			 *
+			 * @param DoliDB $db         Database handler
+			 * @param string $fieldName  Field name
+			 * @param array  $fieldConfig Field configuration
+			 */
 			public function __construct($db, $fieldName, $fieldConfig)
 			{
 				$this->db = $db;
@@ -702,7 +717,15 @@ class CommonObjectTest extends CommonClassTest
 			public $status = 0;
 			public $statut = 0;
 
-			public function __construct($db) { $this->db = $db; }
+			/**
+			 * Constructor
+			 *
+			 * @param DoliDB $db Database handler
+			 */
+			public function __construct($db)
+			{
+				$this->db = $db;
+			}
 		};
 
 		// Use reflection to test private method
@@ -721,7 +744,15 @@ class CommonObjectTest extends CommonClassTest
 			public $status = 1;
 			public $statut = 0;
 
-			public function __construct($db) { $this->db = $db; }
+			/**
+			 * Constructor
+			 *
+			 * @param DoliDB $db Database handler
+			 */
+			public function __construct($db)
+			{
+				$this->db = $db;
+			}
 		};
 
 		$method->setAccessible(true);
@@ -736,7 +767,15 @@ class CommonObjectTest extends CommonClassTest
 			public $status = 0;
 			public $statut = 1;
 
-			public function __construct($db) { $this->db = $db; }
+			/**
+			 * Constructor
+			 *
+			 * @param DoliDB $db Database handler
+			 */
+			public function __construct($db)
+			{
+				$this->db = $db;
+			}
 		};
 
 		$method->setAccessible(true);
@@ -751,7 +790,15 @@ class CommonObjectTest extends CommonClassTest
 			public $status = 1;
 			public $statut = 1;
 
-			public function __construct($db) { $this->db = $db; }
+			/**
+			 * Constructor
+			 *
+			 * @param DoliDB $db Database handler
+			 */
+			public function __construct($db)
+			{
+				$this->db = $db;
+			}
 		};
 
 		$method->setAccessible(true);
@@ -768,7 +815,15 @@ class CommonObjectTest extends CommonClassTest
 			public $status = 1;
 			public $statut = 1;
 
-			public function __construct($db) { $this->db = $db; }
+			/**
+			 * Constructor
+			 *
+			 * @param DoliDB $db Database handler
+			 */
+			public function __construct($db)
+			{
+				$this->db = $db;
+			}
 		};
 
 		$method->setAccessible(true);
@@ -800,7 +855,15 @@ class CommonObjectTest extends CommonClassTest
 				'ref' => array('type' => 'varchar(30)', 'label' => 'Ref', 'enabled' => '1')
 			);
 
-			public function __construct($db) { $this->db = $db; }
+			/**
+			 * Constructor
+			 *
+			 * @param DoliDB $db Database handler
+			 */
+			public function __construct($db)
+			{
+				$this->db = $db;
+			}
 		};
 
 		// Use reflection to test private method
@@ -819,7 +882,15 @@ class CommonObjectTest extends CommonClassTest
 				'ref' => array('type' => 'varchar(30)', 'label' => 'Ref', 'enabled' => '0')
 			);
 
-			public function __construct($db) { $this->db = $db; }
+			/**
+			 * Constructor
+			 *
+			 * @param DoliDB $db Database handler
+			 */
+			public function __construct($db)
+			{
+				$this->db = $db;
+			}
 		};
 
 		$method->setAccessible(true);
@@ -834,7 +905,15 @@ class CommonObjectTest extends CommonClassTest
 				'ref' => array('type' => 'varchar(30)', 'label' => 'Ref', 'enabled' => 'isModEnabled("multicurrency")')
 			);
 
-			public function __construct($db) { $this->db = $db; }
+			/**
+			 * Constructor
+			 *
+			 * @param DoliDB $db Database handler
+			 */
+			public function __construct($db)
+			{
+				$this->db = $db;
+			}
 		};
 
 		$method->setAccessible(true);
@@ -882,11 +961,23 @@ class CommonObjectTest extends CommonClassTest
 				public $lastFieldKey = null;
 				public $lastValue = null;
 
+				/**
+				 * Constructor
+				 *
+				 * @param DoliDB $db Database handler
+				 */
 				public function __construct($db)
 				{
 					$this->db = $db;
 				}
 
+				/**
+				 * Called when a field value is changed
+				 *
+				 * @param string $fieldKey Name of the field that was modified
+				 * @param mixed  $value    New value of the field
+				 * @return void
+				 */
 				protected function onFieldValueChanged($fieldKey, $value)
 				{
 					$this->hookCalled = true;

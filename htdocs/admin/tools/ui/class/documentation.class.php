@@ -261,6 +261,7 @@ class Documentation
 						'ReplaceContentTool' => '#titlesection-tool-replacecontent',
 						'ObjectTool' => '#titlesection-tool-object',
 						'FieldEditTool' => '#titlesection-tool-fieldedit',
+						'LineEditTool' => '#titlesection-tool-lineedit',
 						'SetAndUseContextVars' => '#titlesection-contextvars',
 						'AddContextVarsFromModule' => '#titlesection-contextvars-module',
 					),

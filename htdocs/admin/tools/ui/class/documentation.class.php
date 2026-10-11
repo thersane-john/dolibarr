@@ -260,6 +260,7 @@ class Documentation
 						'FetchTool' => '#titlesection-tool-fetch',
 						'ReplaceContentTool' => '#titlesection-tool-replacecontent',
 						'ObjectTool' => '#titlesection-tool-object',
+						'FieldEditTool' => '#titlesection-tool-fieldedit',
 						'SetAndUseContextVars' => '#titlesection-contextvars',
 						'AddContextVarsFromModule' => '#titlesection-contextvars-module',
 					),

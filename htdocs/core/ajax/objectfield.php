@@ -20,6 +20,8 @@
  *       \brief     Read or update fields of an object from the user interface (ajax edition of cards).
  *                  GET with parameter fields (list of fields separated by a comma) returns the values of the fields
  *                  allowed by CommonObject::isFieldReadableFromUi(), to refresh the values displayed by a page.
+ *                  With fields empty, it returns only the date of modification and the event messages waiting in session
+ *                  (ex: kept by an action of the card posted in ajax).
  *                  With parameter input=1, it also returns the input html of the fields editable from the user interface
  *                  (CommonObject::ajaxInputField()), to open the edition of a field on the card.
  *                  POST with parameter field and the inputs of this field (named ajaxfield_<field>..., read by
@@ -74,7 +76,7 @@ if (!$isupdate && $_SERVER['REQUEST_METHOD'] !== 'GET') {
 	$jsonResponse->setError($langs->transnoentitiesnoconv('ErrorBadParameters'), JsonResponse::HTTP_METHOD_NOT_ALLOWED);
 	$jsonResponse->output();
 }
-if (empty($element) || empty($id) || ($isupdate ? empty($field) : empty($fieldlist))) {
+if (empty($element) || empty($id) || ($isupdate ? empty($field) : !GETPOSTISSET('fields'))) {
 	$jsonResponse->setError($langs->transnoentitiesnoconv('ErrorBadParameters'), JsonResponse::HTTP_BAD_REQUEST);
 	$jsonResponse->output();
 }
@@ -103,7 +105,7 @@ if (!$result) {
 function objectFieldGetOutput($object, $fieldname)
 {
 	return array(
-		'value' => property_exists($object, $fieldname) ? $object->$fieldname : null,
+		'value' => $object->getFieldUiValue($fieldname),
 		'html' => $object->ajaxOutputField($fieldname),
 	);
 }
@@ -162,7 +164,7 @@ if ($value === null) {
 $valuesbefore = array();
 foreach (array_keys($object->fields) as $fieldname) {
 	if ($object->isFieldReadableFromUi($user, $fieldname)) {
-		$valuesbefore[$fieldname] = property_exists($object, $fieldname) ? $object->$fieldname : null;
+		$valuesbefore[$fieldname] = $object->getFieldUiValue($fieldname);
 	}
 }
 
@@ -181,7 +183,7 @@ if (is_object($reloadedobject) && $reloadedobject->id > 0) {
 // The updated field and the other fields changed by the update
 $fields = array($field => objectFieldGetOutput($object, $field));
 foreach ($valuesbefore as $fieldname => $valuebefore) {
-	$valueafter = property_exists($object, $fieldname) ? $object->$fieldname : null;
+	$valueafter = $object->getFieldUiValue($fieldname);
 	if ($fieldname != $field && $valueafter !== $valuebefore) {
 		$fields[$fieldname] = objectFieldGetOutput($object, $fieldname);
 	}
@@ -195,6 +197,8 @@ $jsonResponse->data = array(
 	'html' => $fields[$field]['html'],
 	'fields' => $fields,
 	'tms' => empty($object->date_modification) ? null : (int) $object->date_modification,
+	// The document of the object shows the field: the page generates it again, like the cards do after a change
+	'builddoc' => !getDolGlobalString('MAIN_DISABLE_PDF_AUTOUPDATE') && method_exists($object, 'generateDocument'),
 );
 
 // Messages set by the update (triggers, hooks...) are displayed now by the ajax caller, not on the next page

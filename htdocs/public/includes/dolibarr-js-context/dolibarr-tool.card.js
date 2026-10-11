@@ -4,7 +4,7 @@ document.addEventListener('Dolibarr:Init', function(e) {
 	 * -------------------
 	 * Controller of the card of an object displayed in the page, to update the page in ajax without reloading it.
 	 * Built on Dolibarr.tools.object (the data of the object), it changes the page:
-	 * - setField() saves a field and refreshes the fields displayed changed by the update
+	 * - setField() saves a field and refreshes the fields displayed changed by the update, with a light feedback on them (see showUpdatedFeedback())
 	 * - refreshFields() refreshes the values of fields displayed in containers [data-dol-field] (ex: totals)
 	 * - reload() reloads sections and document lines of the card, the elements are replaced by their new version with Dolibarr.tools.replaceContent():
 	 *   lines are loaded alone with core/ajax/objectline.php, sections with the card loaded without its lines (nolines=1).
@@ -34,6 +34,11 @@ document.addEventListener('Dolibarr:Init', function(e) {
 	 * @type {string[]}
 	 */
 	const sections = ['div.arearef', 'div.tabsAction', '#builddoc_form'];
+
+	/**
+	 * Delay before generating again the document of the card after a change (ms): changes in a row generate it once
+	 */
+	const DOCUMENT_BUILD_DELAY = 3000;
 
 	/**
 	 * Specializations of the cards by element, see card.register()
@@ -109,6 +114,38 @@ document.addEventListener('Dolibarr:Init', function(e) {
 	}
 
 	/**
+	 * Show that a displayed value was updated: a reflection sweeping it once (.updated-feedback of input-feedback.css), limited to its text
+	 * so it crosses the text at the same speed whatever the width of the element. The class is removed at the end of the animation,
+	 * so it can be shown again.
+	 * @param {HTMLElement} el
+	 * @param {Object} [options]
+	 * @param {boolean} [options.soft=false] Lighter, for the values changed as a consequence (computed fields)
+	 */
+	function showUpdatedFeedback(el, options = {}) {
+		const { soft = false } = options;
+		el.classList.remove('updated-feedback', '--soft');
+
+		// Box of the text, relative to the padding box of the element (origin of the reflection ::after)
+		const range = document.createRange();
+		range.selectNodeContents(el);
+		const textRect = range.getBoundingClientRect();
+		const rect = el.getBoundingClientRect();
+		if (textRect.width > 0) {
+			el.style.setProperty('--updated-feedback-left', (textRect.left - rect.left - el.clientLeft) + 'px');
+			el.style.setProperty('--updated-feedback-width', textRect.width + 'px');
+		}
+
+		void el.offsetWidth; // Restarts the animation when it is running
+		el.classList.add('updated-feedback');
+		if (soft) el.classList.add('--soft');
+		el.addEventListener('animationend', () => {
+			el.classList.remove('updated-feedback', '--soft');
+			el.style.removeProperty('--updated-feedback-left');
+			el.style.removeProperty('--updated-feedback-width');
+		}, { once: true });
+	}
+
+	/**
 	 * Controller of the card of an object displayed in the page
 	 */
 	class DolibarrCardController {
@@ -127,6 +164,8 @@ document.addEventListener('Dolibarr:Init', function(e) {
 			this.url = options.url || getCurrentCardUrl();
 			/** State of the lazy refresh of the sections, see scheduleSectionsRefresh() */
 			this.lazySections = { scheduled: false, observer: null, loading: false, pending: false };
+			/** State of the delayed generation of the document, see scheduleDocumentBuild() */
+			this.documentBuild = { timer: null, building: false, pending: false, onPageHide: null };
 		}
 
 		/**
@@ -178,6 +217,16 @@ document.addEventListener('Dolibarr:Init', function(e) {
 				Dolibarr.tools.replaceContent(target, data.html, { mode: 'inner' });
 			}
 			this.updateFields(data.fields, { except: target ? [field] : [], tms: data.tms ? parseInt(data.tms, 10) : null });
+
+			// The other fields changed by the update (computed fields), the field itself is shown by its editor (see card.fields)
+			Object.keys(data.fields || {}).filter(name => name !== field).forEach(name => {
+				this.getFieldContainers(name).forEach(el => {
+					if (!el.dataset.dolEditing) showUpdatedFeedback(el, { soft: true });
+				});
+			});
+
+			// The document shows the field, generated again like the cards do after a change (unless MAIN_DISABLE_PDF_AUTOUPDATE)
+			if (data.builddoc) this.scheduleDocumentBuild();
 
 			return data;
 		}
@@ -414,11 +463,7 @@ document.addEventListener('Dolibarr:Init', function(e) {
 		 * @returns {Promise<Document|null>} Card loaded after the action, null if the card redirected
 		 */
 		async postCard(data, options = {}) {
-			const url = new URL(this.url, window.location.href);
-			url.searchParams.set('nolines', '1');
-			url.searchParams.set('noflusheventmessages', '1');
-
-			const response = await Dolibarr.tools.fetch.post(url.toString(), data, { ...options, responseType: 'response', redirect: 'manual' });
+			const response = await Dolibarr.tools.fetch.post(this.getPostUrl(), data, { ...options, responseType: 'response', redirect: 'manual' });
 			if (response.type === 'opaqueredirect') {
 				// The token of the session was renewed by the card and is unknown: it is read from the card loaded without lines
 				if (isTokenRenewedOnEachCall()) await this.fetchCardWithoutLines(options);
@@ -429,6 +474,18 @@ document.addEventListener('Dolibarr:Init', function(e) {
 			syncCsrfToken(doc);
 
 			return doc;
+		}
+
+		/**
+		 * Url used to post data to the card (see postCard()): without its lines, event messages kept in session
+		 * @returns {string}
+		 */
+		getPostUrl() {
+			const url = new URL(this.url, window.location.href);
+			url.searchParams.set('nolines', '1');
+			url.searchParams.set('noflusheventmessages', '1');
+
+			return url.toString();
 		}
 
 		/**
@@ -471,19 +528,21 @@ document.addEventListener('Dolibarr:Init', function(e) {
 		 *
 		 * @param {Document|null} [doc] Card loaded after the action (see postCard()), the card without lines is loaded if not given
 		 * @param {Object} [options] See reload()
+		 * @param {string[]} [options.sections] Selectors of the sections to refresh, all the sections of the card if not given
 		 * @returns {Promise<Object<string, HTMLElement|null>>} New sections
 		 */
 		async refreshSections(doc = null, options = {}) {
-			const selectors = this.getSections().filter(selector => {
+			const { sections: only = null, ...fetchOptions } = options;
+			const selectors = (only || this.getSections()).filter(selector => {
 				const el = document.querySelector(selector);
 				return el && !el.matches('[data-dol-editing]') && !el.querySelector('[data-dol-editing]');
 			});
 			if (selectors.length === 0) return {};
 
-			const loaded = doc || await this.fetchCardWithoutLines(options);
+			const loaded = doc || await this.fetchCardWithoutLines(fetchOptions);
 
-			// Sections up to date: a lazy refresh scheduled before is not needed anymore
-			if (!this.lazySections.loading) {
+			// Sections up to date: a lazy refresh scheduled before is not needed anymore (unless only some sections are refreshed)
+			if (!only && !this.lazySections.loading) {
 				this.lazySections.scheduled = false;
 				if (this.lazySections.observer) {
 					this.lazySections.observer.disconnect();
@@ -554,6 +613,97 @@ document.addEventListener('Dolibarr:Init', function(e) {
 				if (state.pending) {
 					state.pending = false;
 					this.scheduleSectionsRefresh();
+				}
+			}
+		}
+
+		/**
+		 * Generate again the document of the card later, with the form of generation of the page (form#builddoc_form, action builddoc
+		 * of the card: same model, language and options as the button Generate). The requests are stacked: the document is generated
+		 * DOCUMENT_BUILD_DELAY ms after the last change, once at a time, and once again after if the object changed during the generation.
+		 * A generation still waiting when the page is left is sent with navigator.sendBeacon().
+		 */
+		scheduleDocumentBuild() {
+			const state = this.documentBuild;
+			if (!document.querySelector('form#builddoc_form')) return;
+			if (state.building) {
+				state.pending = true; // Changed during the generation: generated again after
+				return;
+			}
+
+			clearTimeout(state.timer);
+			state.timer = setTimeout(() => this.flushDocumentBuild(), DOCUMENT_BUILD_DELAY);
+
+			if (!state.onPageHide) {
+				state.onPageHide = () => {
+					if (!state.timer) return;
+					clearTimeout(state.timer);
+					state.timer = null;
+					const form = document.querySelector('form#builddoc_form');
+					if (form && navigator.sendBeacon) navigator.sendBeacon(this.getPostUrl(), this.getDocumentBuildData(form));
+				};
+				window.addEventListener('pagehide', state.onPageHide);
+			}
+		}
+
+		/**
+		 * Data of the form of generation, without the message "File generated" of the card: the document is generated again automatically,
+		 * like the cards do after a change (errors are still displayed)
+		 * @param {HTMLFormElement} form
+		 * @returns {FormData}
+		 */
+		getDocumentBuildData(form) {
+			const data = new FormData(form);
+			data.set('nosuccessmessage', '1');
+
+			return data;
+		}
+
+		/**
+		 * Display now the event messages kept in session by the card (see postCard()), ex: the errors of the generation of the document,
+		 * instead of on the next page. Any json response of Dolibarr returns them, the fields of the object are not read (fields empty).
+		 * @returns {Promise<void>}
+		 */
+		async showWaitingEventMessages() {
+			try {
+				await this.object.fetchFields([], { showErrors: false });
+			} catch (error) {
+				// The messages stay in session, displayed by the next page
+			}
+		}
+
+		/**
+		 * Generate now the document scheduled by scheduleDocumentBuild(), then refresh the generated documents
+		 * @returns {Promise<void>}
+		 */
+		async flushDocumentBuild() {
+			const state = this.documentBuild;
+			clearTimeout(state.timer);
+			state.timer = null;
+			if (state.building) {
+				state.pending = true;
+				return;
+			}
+			const form = document.querySelector('form#builddoc_form');
+			if (!form) return;
+
+			state.building = true;
+			try {
+				const doc = await this.postCard(this.getDocumentBuildData(form), { showErrors: false });
+				await this.showWaitingEventMessages();
+				if (doc) {
+					// Only the list of the documents: the banner and the buttons were refreshed after the change, refreshing them again would move the page
+					await this.refreshSections(doc, { showErrors: false, sections: ['#builddoc_form'] });
+				} else {
+					this.scheduleSectionsRefresh(); // Card redirected after the generation
+				}
+			} catch (error) {
+				// The document can be generated with the button of the card
+			} finally {
+				state.building = false;
+				if (state.pending) {
+					state.pending = false;
+					this.scheduleDocumentBuild();
 				}
 			}
 		}
@@ -635,6 +785,7 @@ document.addEventListener('Dolibarr:Init', function(e) {
 	card.sections = sections;
 	card.register = register;
 	card.definePart = definePart;
+	card.showUpdatedFeedback = showUpdatedFeedback;
 
 	Dolibarr.defineTool('card', card);
 });

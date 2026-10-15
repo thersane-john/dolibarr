@@ -100,10 +100,11 @@ class ActionsQuickMemo extends CommonHookActions
 		];
 
 		if (!empty($object) && is_object($object) && isset($object->element)) {
+			$elementType = $this->getMemoElementType($object);
 			$jsConfVars = array_merge([
-				'archivesUrlParams' => '&search_fk_element='. (int) $object->id .'&search_element_type='.$object->element,
+				'archivesUrlParams' => '&search_fk_element='. (int) $object->id .'&search_element_type='.urlencode($elementType),
 				'elementId' => (int) $object->id,
-				'elementType' => $object->element
+				'elementType' => $elementType
 			], $jsConfVars);
 		}
 
@@ -132,15 +133,41 @@ class ActionsQuickMemo extends CommonHookActions
 			return 0;
 		}
 
+		$elementType = $this->getMemoElementType($object);
 		$jsConfVars = [
-			'archivesUrlParams' => '&search_fk_element='. (int) $object->id .'&search_element_type='.$object->element,
+			'archivesUrlParams' => '&search_fk_element='. (int) $object->id .'&search_element_type='.urlencode($elementType),
 			'elementId' => (int) $object->id,
-			'elementType' => $object->element,
+			'elementType' => $elementType,
 			'context' => Memo::getMemoContext($parameters['context']??'', $object),
 		];
 
 		Memo::loadQuickMemoJsInterface($jsConfVars);
 
 		return 0;
+	}
+
+	/**
+	 * Element type stored on the memos of an object and used to find the object back (fetchObjectByElement()).
+	 * The element alone is kept when it already leads to the class of the object, so memos saved before keep matching.
+	 * Otherwise (objects of external modules, or core objects like hrm evaluation) 'element@module' is used, else the
+	 * object is not found and the memos can't be loaded.
+	 *
+	 * @param	CommonObject	$object		Object of the page
+	 * @return	string						Ex: 'propal', 'emailaccount@crmclientconnector'
+	 */
+	private function getMemoElementType($object)
+	{
+		$elementType = (string) $object->element;
+		if (empty($object->module) || $object->module == $object->element) {
+			return $elementType;
+		}
+
+		$properties = getElementProperties($elementType);
+		$classFile = dol_buildpath('/'.$properties['classpath'].'/'.$properties['classfile'].'.class.php', 0);
+		if (strtolower($properties['classname']) == strtolower(get_class($object)) && file_exists($classFile)) {
+			return $elementType;
+		}
+
+		return $elementType.'@'.$object->module;
 	}
 }

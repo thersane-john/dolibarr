@@ -1,0 +1,1600 @@
+/* Copyright (C) 2026		John BOTELLA
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ */
+
+/*
+ * Rail menu manager (experimental), see htdocs/core/menus/standard/rail_menu.php
+ * Colors come from the theme variables, so the menu follows the theme set up and the dark mode.
+ * Rules are scoped with body.nm-body, set by the menu manager.
+ */
+
+:root {
+	/* Visual decisions (see the doc page of the menu):
+	   type = font of the theme, scale 1.2 (11 / 12 / 13.5 / 16), hierarchy by weight and grey, not by link color;
+	   color = accent of the theme menu, rail a bit darker, light neutral panel, hover and selection = light tints of the accent,
+	           red only for what is late;
+	   space = base 4px, rows of 30px, 12px between groups, compact panel (248px);
+	   finish = radius 8px (rows, pills) and 12px (popovers, cards), soft 2-layer shadows only for what is over the page,
+	            signature = light pill around the icon of the active section, relative dates */
+	--nm-topbar-h: 56px;
+	--nm-rail-w: 84px;
+	--nm-strip-w: 6px;
+	--nm-hover-zone-w: 20px;
+	--nm-panel-w: 248px;
+	--nm-row-h: 30px;
+
+	--nm-font-xs: 11px;
+	--nm-font-sm: 12px;
+	--nm-font: 13px;
+	--nm-font-lg: 16px;
+
+	--nm-bar-bg: var(--colorbackhmenu1, #263c5c);
+	--nm-bar-fg: var(--colortextbackhmenu, #fff);
+	--nm-rail-bg: color-mix(in srgb, var(--nm-bar-bg) 88%, #000);
+	--nm-panel-bg: var(--colorbackbody, #fff);
+	--nm-panel-fg: var(--colortext, #222);
+	--nm-content-bg: var(--colorbackbody, #fff);
+	--nm-content-fg: var(--colortext, #222);
+	--nm-accent: var(--nm-bar-bg);
+	--nm-accent-text: color-mix(in srgb, var(--nm-bar-bg) 82%, var(--colortext, #000));
+	--nm-muted: color-mix(in srgb, var(--colortext, #222) 64%, transparent);
+	--nm-hover: color-mix(in srgb, var(--nm-bar-bg) 8%, transparent);
+	--nm-active: color-mix(in srgb, var(--nm-bar-bg) 14%, transparent);
+	--nm-border: color-mix(in srgb, var(--colortext, #222) 10%, transparent);
+	--nm-bar-hover: rgba(255, 255, 255, 0.1);
+	--nm-bar-active: rgba(255, 255, 255, 0.2);
+	--nm-badge-bg: #d92d20;
+	--nm-badge-fg: #fff;
+	--nm-danger: #c4320a;
+	--nm-favorite: #e0a800;
+	--nm-scroll-thumb: color-mix(in srgb, var(--colortext, #222) 22%, transparent);
+	--nm-scroll-thumb-bar: rgba(255, 255, 255, 0.22);
+	--nm-shadow: 0 1px 2px rgba(16, 24, 40, 0.06), 0 12px 32px -8px rgba(16, 24, 40, 0.24);
+	--nm-radius: 8px;
+	--nm-radius-lg: 12px;
+	--nm-duration: 160ms;
+}
+
+@media (pointer: coarse) {
+	:root {
+		--nm-row-h: 44px;
+	}
+}
+
+/* Page layout of main.inc.php: top bar, left column (#id-left) and main area (#id-right) */
+
+body.nm-body #id-top {
+	display: flex;
+	align-items: center;
+	height: var(--nm-topbar-h);
+	padding: 0;
+	border: 0;
+	background: var(--nm-bar-bg);
+	position: sticky;
+	top: 0;
+	z-index: 1005;
+}
+
+body.nm-body #tmenu_tooltip {
+	flex: 1;
+	min-width: 0;
+	height: 100%;
+	padding: 0 !important;
+}
+
+/* Right part of the top bar, from the core: bookmarks, tools, user menu */
+body.nm-body div.login_block {
+	position: static;
+	display: flex !important;
+	align-items: center;
+	flex: none;
+	height: 100%;
+	padding-right: 8px;
+	line-height: normal;
+}
+
+/* important: on small screens eldy turns this block into a light box of fixed width */
+body.nm-body div.login_block {
+	top: auto;
+	width: auto;
+	min-width: 0;
+	max-width: none;
+	padding-top: 0;
+	padding-bottom: 0;
+	padding-left: 0;
+	background: none;
+	text-align: left;
+	z-index: auto;
+}
+
+/* Links of the bar only: the dropdowns opened from it have a light background and their own colors */
+body.nm-body div.login_block a:not(.dropdown-menu a),
+body.nm-body .atoplogin:not(.dropdown-menu .atoplogin),
+body.nm-body .atoplogin:not(.dropdown-menu .atoplogin):hover {
+	color: var(--nm-bar-fg) !important;
+}
+
+body.nm-body div.login_block_tools,
+body.nm-body div.login_block_other,
+body.nm-body div.login_block_user {
+	display: inline-flex;
+	align-items: center;
+	height: auto;
+	margin: 0;
+	line-height: normal;
+	clear: none;
+}
+
+body.nm-body #id-container {
+	display: flex !important;
+	width: 100%;
+}
+
+body.nm-body .side-nav {
+	display: block !important;
+	position: sticky;
+	top: var(--nm-topbar-h);
+	align-self: flex-start;
+	flex: none;
+	width: auto;
+	height: calc(100vh - var(--nm-topbar-h));
+	padding: 0;
+	border: 0;
+	box-shadow: none;
+	background: none;
+	z-index: 1000;
+}
+
+body.nm-body #id-left {
+	display: block;
+	height: 100%;
+	padding: 0 !important;
+}
+
+/* The search of records moves to the top bar, the version block is not shown */
+body.nm-body #id-left > :not(.vmenu),
+body.nm-body #blockvmenuhelp {
+	display: none !important;
+}
+
+body.nm-body div.vmenu {
+	width: auto;
+	height: 100%;
+	margin: 0;
+	padding: 0 !important;
+	border: 0;
+	background: none;
+}
+
+body.nm-body .nm-nav {
+	height: 100%;
+}
+
+body.nm-body #id-right {
+	display: block;
+	flex: 1;
+	min-width: 0;
+	width: auto !important;
+}
+
+/* Scoped to the menu components, the page itself keeps its own styles */
+.nm-topbar [hidden],
+.nm-nav [hidden],
+.nm-backdrop[hidden] {
+	display: none !important;
+}
+
+.nm-topbar button,
+.nm-nav button {
+	font: inherit;
+	color: inherit;
+	background: none;
+	border: 0;
+	margin: 0;
+	cursor: pointer;
+	box-shadow: none;
+}
+
+.nm-topbar :focus-visible,
+.nm-nav :focus-visible {
+	outline: 2px solid var(--nm-accent);
+	outline-offset: 2px;
+}
+
+.nm-topbar :focus-visible,
+.nm-rail :focus-visible {
+	outline-color: var(--nm-bar-fg);
+	outline-offset: -3px;
+}
+
+.nm-visually-hidden {
+	position: absolute !important;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+	clip: rect(0 0 0 0);
+	white-space: nowrap;
+}
+
+.nm-skip {
+	position: absolute;
+	left: 8px;
+	top: -100px;
+	z-index: 100;
+	padding: 10px 16px;
+	background: var(--nm-content-bg);
+	color: var(--nm-accent);
+	border-radius: var(--nm-radius);
+}
+
+.nm-skip:focus {
+	top: 8px;
+}
+
+/* Thin scrollbars */
+
+.nm-panel-body,
+.nm-find-results,
+.nm-popover {
+	scrollbar-width: thin;
+	scrollbar-color: var(--nm-scroll-thumb) transparent;
+}
+
+/* Top bar */
+
+.nm-topbar {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	height: 100%;
+	padding: 0 8px 0 0;
+	color: var(--nm-bar-fg);
+	position: relative;
+	z-index: 40;
+}
+
+
+.nm-iconbtn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	position: relative;
+	flex: none;
+	width: 44px;
+	height: 44px;
+	border-radius: var(--nm-radius);
+	color: inherit;
+	font-size: 18px;
+}
+
+.nm-iconbtn:hover,
+.nm-iconbtn.nm-pop-trigger[aria-expanded="true"] {
+	background: var(--nm-bar-hover);
+}
+
+.nm-panel .nm-iconbtn {
+	width: 36px;
+	height: 36px;
+	font-size: 15px;
+}
+
+.nm-panel .nm-iconbtn:hover {
+	background: var(--nm-hover);
+}
+
+/* Same width as the rail: the button is centered above the sections, the name is aligned with the panel title */
+.nm-topbar-start {
+	display: flex;
+	justify-content: center;
+	flex: none;
+	width: var(--nm-rail-w);
+}
+
+.nm-brand,
+.nm-brand:visited {
+	display: inline-flex;
+	align-items: center;
+	min-width: 0;
+	margin-left: 4px;
+	max-width: 240px;
+	color: inherit;
+	font-weight: 600;
+	text-decoration: none;
+}
+
+.nm-brand-name {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.nm-tag,
+.nm-tag:visited {
+	flex: none;
+	padding: 2px 8px;
+	border: 1px solid currentColor;
+	border-radius: 999px;
+	color: inherit;
+	font-size: 11px;
+	opacity: 0.85;
+	text-decoration: none;
+}
+
+.nm-tag:hover {
+	opacity: 1;
+	background: var(--nm-bar-hover);
+}
+
+.nm-find {
+	position: relative;
+	flex: 1;
+	max-width: 560px;
+	margin: 0 auto;
+}
+
+.nm-find-icon {
+	position: absolute;
+	left: 12px;
+	top: 50%;
+	z-index: 1;
+	transform: translateY(-50%);
+	opacity: 0.8;
+	pointer-events: none;
+}
+
+.nm-body .nm-find input[type="search"] {
+	width: 100%;
+	height: 40px;
+	box-sizing: border-box;
+	/* important: the theme forces the padding of search inputs */
+	padding: 0 40px 0 38px !important;
+	margin: 0;
+	border: 1px solid transparent;
+	border-radius: var(--nm-radius);
+	background: var(--nm-bar-hover);
+	color: var(--nm-bar-fg);
+	font-size: 15px;
+}
+
+.nm-body .nm-find input[type="search"]::placeholder {
+	color: var(--nm-bar-fg);
+	opacity: 0.75;
+}
+
+.nm-body .nm-find input[type="search"]:focus {
+	background: var(--nm-content-bg);
+	color: var(--nm-content-fg);
+	border-color: var(--nm-accent);
+	outline: none;
+}
+
+/* important: eldy forces "color: unset" on the icons of .tmenu, the bar is inside it */
+.nm-find:focus-within .nm-find-icon {
+	color: var(--nm-content-fg) !important;
+}
+
+/* On the light background of the focused field, the hint switches to the text color */
+.nm-body .nm-find input[type="search"]:focus::placeholder {
+	color: var(--nm-content-fg);
+	opacity: 0.55;
+}
+
+.nm-kbd {
+	position: absolute;
+	right: 10px;
+	top: 50%;
+	transform: translateY(-50%);
+	padding: 1px 7px;
+	border: 1px solid currentColor;
+	border-radius: 4px;
+	font-size: 12px;
+	opacity: 0.7;
+	pointer-events: none;
+}
+
+.nm-find:focus-within .nm-kbd {
+	display: none;
+}
+
+/* After Escape twice in a field of the page: the key that opens the search lights up */
+.nm-find-hint .nm-kbd {
+	opacity: 1;
+	background: var(--nm-bar-fg);
+	color: var(--nm-bar-bg);
+	animation: nm-kbd-pulse 0.5s ease 2;
+}
+
+@keyframes nm-kbd-pulse {
+	50% {
+		transform: translateY(-50%) scale(1.25);
+	}
+}
+
+.nm-find-results {
+	position: absolute;
+	top: calc(100% + 6px);
+	left: 0;
+	right: 0;
+	max-height: 60vh;
+	overflow: auto;
+	background: var(--nm-content-bg);
+	color: var(--nm-content-fg);
+	border-radius: var(--nm-radius);
+	box-shadow: var(--nm-shadow);
+}
+
+.nm-find-results ul {
+	list-style: none;
+	margin: 0;
+	padding: 6px 0;
+}
+
+.nm-find-results li {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	min-height: 44px;
+	padding: 4px 14px;
+	cursor: pointer;
+}
+
+.nm-find-results li:hover,
+.nm-find-results li[aria-selected="true"] {
+	background: var(--nm-active);
+}
+
+.nm-find-label {
+	font-weight: 600;
+}
+
+.nm-find-results li.nm-find-group {
+	min-height: 0;
+	padding: 10px 14px 4px;
+	font-size: 11px;
+	font-weight: 600;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	color: var(--nm-muted);
+	cursor: default;
+}
+
+.nm-find-results li.nm-find-group:hover {
+	background: none;
+}
+
+.nm-find-search .nm-find-label {
+	font-weight: 400;
+}
+
+/* Title of the search of records: holds the text typed, on one line whatever its length */
+.nm-find-results li.nm-find-group-search {
+	display: block;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	text-transform: none;
+	letter-spacing: 0;
+	font-size: var(--nm-font-sm);
+}
+
+.nm-find-search .nm-find-label {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+/* The place whose numbering matches the reference typed */
+.nm-find-search.nm-find-match .nm-find-label {
+	font-weight: 600;
+}
+
+.nm-find-context,
+.nm-link-context {
+	font-size: 12px;
+	color: var(--nm-muted);
+}
+
+.nm-find-empty {
+	margin: 0;
+	padding: 14px;
+	color: var(--nm-muted);
+}
+
+.nm-find-toggle {
+	display: none !important;
+}
+
+.nm-actions {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	flex: none;
+}
+
+.nm-pop {
+	position: relative;
+}
+
+.nm-btn-primary {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	height: 40px;
+	padding: 0 14px;
+	border-radius: var(--nm-radius);
+	background: var(--nm-bar-hover) !important;
+	font-weight: 600;
+}
+
+.nm-btn-primary:hover,
+.nm-btn-primary[aria-expanded="true"] {
+	background: var(--nm-bar-active) !important;
+}
+
+/* Popovers */
+
+.nm-popover {
+	position: absolute;
+	right: 0;
+	top: calc(100% + 8px);
+	width: 320px;
+	max-height: 70vh;
+	overflow: auto;
+	padding: 8px 0;
+	background: var(--nm-content-bg);
+	color: var(--nm-content-fg);
+	border-radius: var(--nm-radius);
+	box-shadow: var(--nm-shadow);
+	z-index: 50;
+}
+
+.nm-popover-title {
+	margin: 4px 16px 8px;
+	font-size: 15px;
+	font-weight: 600;
+	color: var(--nm-content-fg);
+}
+
+.nm-popover .dropdown-quickadd-list {
+	display: block;
+}
+
+.nm-popover a.quickadd-item {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	min-height: 40px;
+	padding: 4px 16px;
+	color: var(--nm-content-fg);
+	text-decoration: none;
+	white-space: nowrap;
+}
+
+/* important: eldy gives .dropdown-item the colors of the bar on hover, the popovers of the menu stay light */
+.nm-popover a.quickadd-item:hover,
+.nm-popover a.quickadd-item:focus,
+.nm-popover a.quickadd-item:hover span::before,
+.nm-popover a.quickadd-item:focus span::before {
+	color: var(--nm-content-fg) !important;
+	background: var(--nm-hover);
+}
+
+.nm-popover a.quickadd-item:hover span::before,
+.nm-popover a.quickadd-item:focus span::before {
+	background: none;
+}
+
+.nm-notif-list {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.nm-notif-item,
+.nm-notif-item:visited {
+	display: grid;
+	grid-template-columns: 1fr auto;
+	gap: 2px 8px;
+	align-items: center;
+	padding: 8px 16px;
+	color: var(--nm-content-fg);
+	text-decoration: none;
+}
+
+.nm-notif-item:hover {
+	background: var(--nm-hover);
+}
+
+.nm-notif-label {
+	font-weight: 600;
+}
+
+.nm-notif-help {
+	grid-column: 1 / -1;
+	font-size: 12px;
+	color: var(--nm-muted);
+}
+
+.nm-empty {
+	margin: 8px 16px;
+	color: var(--nm-muted);
+	line-height: 1.4;
+}
+
+.nm-demo {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 6px;
+	margin: 8px 0 0;
+	padding: 10px 16px 4px;
+	border-top: 1px solid var(--nm-border);
+}
+
+.nm-demo-title {
+	flex-basis: 100%;
+	margin: 0 0 2px;
+	font-size: 12px;
+	color: var(--nm-muted);
+}
+
+.nm-demo select {
+	flex: 1;
+	min-width: 0;
+	height: 34px;
+}
+
+.nm-btn {
+	height: 34px;
+	padding: 0 12px;
+	border: 1px solid var(--nm-border) !important;
+	border-radius: var(--nm-radius);
+}
+
+.nm-btn:hover {
+	background: var(--nm-hover);
+}
+
+/* Badges */
+
+.nm-badge {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 18px;
+	height: 18px;
+	padding: 0 5px;
+	box-sizing: border-box;
+	border-radius: 9px;
+	background: var(--nm-badge-bg);
+	color: var(--nm-badge-fg);
+	font-size: 11px;
+	font-weight: 700;
+	line-height: 1;
+}
+
+.nm-iconbtn .nm-badge,
+.nm-rail-icon .nm-badge {
+	position: absolute;
+	top: 2px;
+	right: 0;
+	box-shadow: 0 0 0 2px var(--nm-bar-bg);
+}
+
+.nm-rail-icon .nm-badge {
+	top: -6px;
+	right: -12px;
+}
+
+/* Rail of sections */
+
+.nm-nav {
+	display: flex;
+	flex: none;
+	position: relative;
+	z-index: 30;
+	min-height: 0;
+}
+
+.nm-rail {
+	flex: none;
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	/* It still scrolls, without a bar that would take width from the labels */
+	scrollbar-width: none;
+	width: var(--nm-rail-w);
+	margin: 0;
+	padding: 8px 0;
+	list-style: none;
+	overflow-y: auto;
+	overscroll-behavior: contain;
+	background: var(--nm-rail-bg);
+	color: var(--nm-bar-fg);
+}
+
+.nm-rail::-webkit-scrollbar {
+	display: none;
+}
+
+.nm-rail-item,
+.nm-rail-tool {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 4px;
+	width: 100%;
+	min-height: 58px;
+	padding: 4px;
+	position: relative;
+	text-align: center;
+}
+
+.nm-rail-bottom {
+	margin-top: auto;
+	padding-top: 8px;
+}
+
+/* Links of the menu look like buttons, no underline */
+.nm-body .nm-nav a:hover,
+.nm-body .nm-popover a:hover,
+.nm-body .nm-find a:hover,
+.nm-body .nm-brand:hover,
+.nm-body .nm-tag:hover {
+	text-decoration: none;
+}
+
+.nm-newtab {
+	font-size: 0.75em;
+	opacity: 0.7;
+}
+
+/* Section without sub entries: a direct link, same look as the other sections */
+a.nm-rail-item,
+a.nm-rail-item:visited,
+a.nm-rail-item:hover {
+	box-sizing: border-box;
+	color: inherit;
+	text-decoration: none;
+}
+
+/* The icon sits in a pill: lighter on hover, light for the open or current section (signature of the menu) */
+.nm-rail-icon {
+	position: relative;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 44px;
+	height: 30px;
+	border-radius: var(--nm-radius-lg);
+	font-size: 17px;
+	line-height: 1;
+	transition: background var(--nm-duration) ease;
+}
+
+.nm-rail-item:hover .nm-rail-icon,
+.nm-rail-tool:hover .nm-rail-icon,
+.nm-rail-tool[aria-expanded="true"] .nm-rail-icon {
+	background: var(--nm-bar-hover);
+}
+
+.nm-rail-item[aria-expanded="true"] .nm-rail-icon,
+.nm-rail-item[aria-current] .nm-rail-icon {
+	background: var(--nm-bar-active);
+}
+
+/* Icons of the top menu entries carry module colors, unreadable on the bar color, and classes of eldy
+   (pictofixedwidth: fixed width aligned left, em0xx: smaller size): same box and glyph centered for all */
+.nm-rail-icon > span:not(.nm-badge) {
+	display: inline-block;
+	width: 1.25em !important;
+	margin: 0 !important;
+	padding: 0 !important;
+	text-align: center !important;
+	color: inherit !important;
+	opacity: 1 !important;
+}
+
+.nm-rail-label {
+	max-width: 100%;
+	font-size: var(--nm-font-xs);
+	line-height: 1.25;
+	opacity: 0.8;
+	overflow: hidden;
+	display: -webkit-box;
+	-webkit-line-clamp: 2;
+	-webkit-box-orient: vertical;
+	overflow-wrap: anywhere;
+}
+
+.nm-rail-item[aria-current] .nm-rail-label,
+.nm-rail-item[aria-expanded="true"] .nm-rail-label,
+.nm-rail-item:hover .nm-rail-label {
+	opacity: 1;
+}
+
+.nm-rail-item[aria-current] .nm-rail-label {
+	font-weight: 600;
+}
+
+.nm-rail-tool {
+	min-height: 52px;
+}
+
+/* Panels */
+
+.nm-panels {
+	display: flex;
+	min-height: 0;
+}
+
+.nm-panel {
+	display: flex;
+	flex-direction: column;
+	width: var(--nm-panel-w);
+	min-height: 0;
+	background: var(--nm-panel-bg);
+	color: var(--nm-panel-fg);
+	border-right: 1px solid var(--nm-border);
+	font-size: var(--nm-font);
+}
+
+.nm-panel-head {
+	display: flex;
+	align-items: center;
+	gap: 2px;
+	min-height: 48px;
+	padding: 6px 6px 2px 16px;
+}
+
+.nm-panel-title {
+	flex: 1;
+	min-width: 0;
+	margin: 0;
+	font-size: 15px;
+	font-weight: 650;
+	letter-spacing: -0.01em;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.nm-panel .nm-iconbtn {
+	color: var(--nm-muted);
+}
+
+.nm-panel .nm-iconbtn:hover {
+	color: var(--nm-panel-fg);
+}
+
+.nm-back {
+	display: none !important;
+}
+
+/* The pin shows the mode: pressed = menu kept open, tilted = sections open on hover */
+.nm-pin .fas {
+	transform: rotate(45deg);
+	transition: transform var(--nm-duration) ease;
+}
+
+.nm-panel .nm-pin[aria-pressed="true"] {
+	color: var(--nm-accent-text);
+}
+
+.nm-pin[aria-pressed="true"] .fas {
+	transform: none;
+}
+
+body.nm-pinned .nm-panel-close {
+	display: none;
+}
+
+.nm-panel-body {
+	flex: 1;
+	min-height: 0;
+	overflow-y: auto;
+	overscroll-behavior: contain;
+	padding: 2px 8px 16px;
+}
+
+/* Tree of entries */
+
+.nm-tree {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+/* Entries of a group are not indented, deeper levels hang on a thin guide line */
+.nm-tree .nm-tree:not(.nm-tree-depth1) {
+	margin-left: 18px;
+	padding-left: 6px;
+	border-left: 1px solid var(--nm-border);
+}
+
+/* A group with entries is a section title of the panel: its icon (module color) and its label in semi bold */
+.nm-group + .nm-group {
+	margin-top: 10px;
+}
+
+.nm-nav .nm-group:has(> .nm-sub) > .nm-row .nm-link {
+	font-weight: 650;
+	color: var(--nm-panel-fg);
+}
+
+/* Entries of a group with an icon are aligned on the label of the group. A group with the label of the section
+   is not repeated under the title of the panel (nm-group-untitled): its entries only, same column of labels. */
+.nm-group:has(> .nm-row .nm-link-icon) > .nm-sub > .nm-tree-depth1 {
+	padding-left: 26px;
+}
+
+.nm-group-untitled > .nm-sub > .nm-tree-depth1 {
+	padding-left: 26px;
+}
+
+/* Their chevron hangs in this margin, so that all the labels start at the same place */
+.nm-nav .nm-group:has(> .nm-row .nm-link-icon) > .nm-sub > .nm-tree-depth1 > li > .nm-row > .nm-toggle,
+.nm-nav .nm-group-untitled > .nm-sub > .nm-tree-depth1 > li > .nm-row > .nm-toggle {
+	margin-left: -22px;
+}
+
+.nm-nav .nm-group:has(> .nm-row .nm-link-icon) > .nm-sub > .nm-tree-depth1 > li > .nm-row > .nm-toggle + .nm-link,
+.nm-nav .nm-group-untitled > .nm-sub > .nm-tree-depth1 > li > .nm-row > .nm-toggle + .nm-link {
+	padding-left: 10px;
+}
+
+.nm-link-icon {
+	flex: none;
+	display: inline-flex;
+	justify-content: center;
+	width: 18px;
+	font-size: 14px;
+}
+
+/* Classes of eldy on the icons (pictofixedwidth, paddingright, em0xx): same box for all */
+.nm-link-icon > span {
+	width: auto !important;
+	margin: 0 !important;
+	padding: 0 !important;
+	font-size: inherit !important;
+}
+
+.nm-link-icon > img {
+	width: 16px !important;
+	height: 16px;
+	margin: 0 !important;
+	padding: 0 !important;
+}
+
+.nm-rail-icon > img {
+	width: 20px;
+	height: 20px;
+	margin: 0 !important;
+	padding: 0 !important;
+}
+
+.nm-row {
+	position: relative;
+	display: flex;
+	align-items: center;
+	min-height: var(--nm-row-h);
+	border-radius: var(--nm-radius);
+	transition: background var(--nm-duration) ease;
+}
+
+.nm-row:hover {
+	background: var(--nm-hover);
+}
+
+/* a:link of the theme would color the entries not visited yet like links: same text color for all */
+.nm-nav a.nm-link:link,
+.nm-nav a.nm-link:visited,
+.nm-link {
+	flex: 1;
+	min-width: 0;
+	display: flex;
+	align-items: center;
+	column-gap: 8px;
+	align-self: stretch;
+	padding: 4px 10px;
+	border-radius: var(--nm-radius);
+	color: inherit;
+	text-decoration: none;
+}
+
+.nm-link-label {
+	flex: 1;
+	min-width: 0;
+	overflow-wrap: anywhere;
+}
+
+/* Favorites show the section under the label */
+.nm-link:has(.nm-link-context) {
+	flex-wrap: wrap;
+}
+
+.nm-link-context {
+	flex-basis: 100%;
+}
+
+.nm-link-nourl {
+	color: var(--nm-muted);
+}
+
+/* Hover and selection color the whole row (link and star), not only the link */
+.nm-nav .nm-panel a.nm-link[aria-current="page"] {
+	color: var(--nm-accent-text);
+	font-weight: 600;
+}
+
+.nm-row:has(> a.nm-link[aria-current="page"]),
+.nm-row:has(> a.nm-link[aria-current="page"]):hover {
+	background: var(--nm-active);
+}
+
+/* The title of the panel is a link to the section, never shown as the current entry */
+.nm-nav .nm-panel .nm-panel-title a.nm-link {
+	padding-left: 0;
+	font-weight: inherit;
+	color: inherit;
+	background: none;
+}
+
+.nm-nav .nm-toggle {
+	flex: none;
+	width: 22px;
+	align-self: stretch;
+	margin-left: 2px;
+	border-radius: var(--nm-radius);
+	font-size: 9px;
+	color: var(--nm-muted);
+}
+
+.nm-toggle + .nm-link {
+	padding-left: 4px;
+}
+
+.nm-toggle .fas {
+	transition: transform var(--nm-duration) ease;
+}
+
+.nm-toggle[aria-expanded="true"] .fas {
+	transform: rotate(90deg);
+}
+
+/*
+ * Favorite star: shown on hover or focus of the row, always shown (smaller) once favorite.
+ * Laid over the end of the first line so that it takes no width from the labels: it gets the
+ * opaque color of the row to hide the text under it, the space is reserved only when it stays visible
+ */
+.nm-nav .nm-fav {
+	position: absolute;
+	top: 0;
+	right: 0;
+	width: 28px;
+	height: var(--nm-row-h);
+	border-radius: var(--nm-radius);
+	background: var(--nm-panel-bg);
+	box-shadow: -8px 0 6px -2px var(--nm-panel-bg);
+	font-size: 11px;
+	color: var(--nm-muted);
+	opacity: 0;
+	transition: opacity var(--nm-duration) ease, font-size var(--nm-duration) ease;
+}
+
+.nm-row:hover .nm-fav,
+.nm-row:focus-within .nm-fav {
+	opacity: 0.6;
+}
+
+/* On hover the star waits a little, so that moving the mouse over the panel does not make stars blink everywhere */
+.nm-nav .nm-row:hover .nm-fav {
+	transition-delay: 1s;
+}
+
+/* Keyboard focus shows it at once. Leaving the row hides it at once too (the delay is only on the hover state) */
+.nm-nav .nm-row:focus-within .nm-fav {
+	transition-delay: 0s;
+}
+
+.nm-fav:hover,
+.nm-fav:focus-visible {
+	opacity: 1 !important;
+}
+
+.nm-fav[aria-pressed="true"] {
+	opacity: 1;
+	color: var(--nm-favorite);
+	font-size: 8px;
+}
+
+.nm-row:hover .nm-fav[aria-pressed="true"],
+.nm-row:focus-within .nm-fav[aria-pressed="true"] {
+	opacity: 1;
+	font-size: 11px;
+}
+
+/* Same opaque color as the row under the star, else the text shows through on hover or on the current entry */
+.nm-row:hover > .nm-fav {
+	background: color-mix(in srgb, var(--nm-bar-bg) 8%, var(--nm-panel-bg));
+	box-shadow: -8px 0 6px -2px color-mix(in srgb, var(--nm-bar-bg) 8%, var(--nm-panel-bg));
+}
+
+.nm-row:has(> a.nm-link[aria-current="page"]) > .nm-fav {
+	background: color-mix(in srgb, var(--nm-bar-bg) 14%, var(--nm-panel-bg));
+	box-shadow: -8px 0 6px -2px color-mix(in srgb, var(--nm-bar-bg) 14%, var(--nm-panel-bg));
+}
+
+/* Space reserved only when something stays visible at the end of the row: a favorite star or a badge */
+.nm-row:has(> .nm-fav[aria-pressed="true"]) > .nm-link {
+	padding-right: 22px;
+}
+
+.nm-row:has(> .nm-link .nm-badge:not([hidden])) > .nm-link {
+	padding-right: 30px;
+}
+
+/* Touch screens have no hover: keep the stars visible but subtle, with their place */
+@media (hover: none) {
+	.nm-fav {
+		opacity: 0.25;
+	}
+
+	.nm-row:has(> .nm-fav) > .nm-link {
+		padding-right: 30px;
+	}
+}
+
+/* Widget at the bottom of a panel (loaded when the panel opens): a card */
+
+.nm-panel-widget {
+	margin-top: 18px;
+}
+
+.nm-widget {
+	padding: 12px 6px 8px;
+	border: 1px solid var(--nm-border);
+	border-radius: var(--nm-radius-lg);
+	background: color-mix(in srgb, var(--nm-bar-bg) 3%, var(--nm-panel-bg));
+}
+
+.nm-widget-title {
+	margin: 0 8px 6px;
+	font-size: var(--nm-font);
+	font-weight: 650;
+}
+
+.nm-widget-group {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	margin: 10px 8px 4px;
+	font-size: var(--nm-font-xs);
+	font-weight: 600;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	color: var(--nm-muted);
+}
+
+.nm-widget-late::before {
+	content: "";
+	width: 6px;
+	height: 6px;
+	border-radius: 50%;
+	background: var(--nm-danger);
+}
+
+.nm-widget-list {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+/* One event: when on the left (day, then hour), what on the right */
+/* a:link of the theme would color the events like links */
+.nm-panel a.nm-widget-item:link,
+.nm-panel a.nm-widget-item:visited {
+	display: grid;
+	grid-template-columns: 62px minmax(0, 1fr);
+	column-gap: 10px;
+	align-items: start;
+	padding: 6px 8px;
+	border-radius: var(--nm-radius);
+	color: inherit;
+	text-decoration: none;
+}
+
+.nm-widget-item:hover {
+	background: var(--nm-hover);
+}
+
+.nm-widget-when {
+	display: flex;
+	flex-direction: column;
+	font-size: var(--nm-font-xs);
+	line-height: 1.35;
+	color: var(--nm-muted);
+}
+
+.nm-widget-day {
+	font-weight: 600;
+	color: var(--nm-panel-fg);
+}
+
+.nm-widget-item-late .nm-widget-day,
+.nm-widget-item-late .nm-widget-hour {
+	color: var(--nm-danger);
+}
+
+.nm-widget-what {
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+}
+
+.nm-widget-label {
+	font-size: 13px;
+	line-height: 1.35;
+	overflow: hidden;
+	display: -webkit-box;
+	-webkit-line-clamp: 2;
+	-webkit-box-orient: vertical;
+}
+
+.nm-widget-sub {
+	font-size: var(--nm-font-sm);
+	color: var(--nm-muted);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.nm-nav .nm-panel-widget .nm-empty {
+	margin: 4px 8px;
+}
+
+.nm-widget-more,
+.nm-widget-more:visited {
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+	gap: 6px;
+	margin: 6px 8px 0;
+	font-size: var(--nm-font-sm);
+	font-weight: 600;
+	color: var(--nm-accent-text);
+}
+
+/* Display options */
+
+.nm-display-pop {
+	left: calc(var(--nm-rail-w) + 8px);
+	right: auto;
+	top: auto;
+	bottom: 8px;
+	width: 270px;
+}
+
+.nm-display-group {
+	margin: 0;
+	padding: 0;
+	/* important: the theme draws a border on fieldsets */
+	border: 0 !important;
+}
+
+.nm-display-group legend {
+	float: left;
+	width: calc(100% - 32px);
+	padding: 0;
+}
+
+.nm-display-group legend + .nm-option {
+	clear: left;
+}
+
+.nm-option {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	min-height: 40px;
+	padding: 0 16px;
+	cursor: pointer;
+}
+
+.nm-option:hover {
+	background: var(--nm-hover);
+}
+
+.nm-option input {
+	margin: 0;
+}
+
+.nm-option-pin {
+	margin-top: 6px;
+	border-top: 1px solid var(--nm-border);
+}
+
+.nm-option-disabled {
+	opacity: 0.5;
+	cursor: default;
+}
+
+/* The panel of the current section is drawn open by the server, for the menu kept open only (until rail_menu.js runs) */
+body:not(.nm-pinned) .nm-panel.nm-panel-boot {
+	display: none;
+}
+
+/* Overlay mode: rail only, the panel opens over the content */
+
+body:not(.nm-pinned) .nm-panels {
+	position: absolute;
+	left: var(--nm-rail-w);
+	top: 0;
+	bottom: 0;
+	box-shadow: var(--nm-shadow);
+}
+
+/* The rail stays above the panel, so that the panel comes out from behind it */
+.nm-rail {
+	position: relative;
+	z-index: 2;
+}
+
+.nm-panels.nm-panels-enter {
+	animation: nm-panels-in var(--nm-duration) ease-out;
+}
+
+@keyframes nm-panels-in {
+	from {
+		opacity: 0;
+		transform: translateX(-16px);
+	}
+}
+
+body:not(.nm-pinned) .nm-panel {
+	height: 100%;
+}
+
+.nm-backdrop {
+	position: fixed;
+	inset: var(--nm-topbar-h) 0 0 0;
+	z-index: 25;
+	background: rgba(0, 0, 0, 0.25);
+}
+
+/* Display of the sections bar (not on small screens, where the menu is a drawer) */
+
+@media (min-width: 768px) {
+	body[data-rail="icons"] {
+		--nm-rail-w: 60px;
+	}
+
+	body[data-rail="icons"] .nm-rail-label {
+		display: none;
+	}
+
+	body[data-rail="icons"] .nm-rail-item,
+	body[data-rail="icons"] .nm-rail-tool {
+		min-height: 52px;
+	}
+
+	/* Hidden: a thin strip at the left edge, the bar comes out on hover or keyboard focus */
+	/* Only a thin zone at the edge catches the pointer (a bit wider than the visible strip):
+	   the bar, once out, reacts where it is shown */
+	body[data-rail="hidden"] .nm-nav {
+		position: absolute;
+		top: 0;
+		bottom: 0;
+		left: 0;
+		width: var(--nm-hover-zone-w);
+	}
+
+	body[data-rail="hidden"] #id-right {
+		margin-left: var(--nm-strip-w);
+	}
+
+	/* The panels move with the bar: same shift, same transition, so a panel opened while the bar comes out is pushed by it */
+	body[data-rail="hidden"] .nm-rail,
+	body[data-rail="hidden"] .nm-panels {
+		transform: translateX(calc(var(--nm-strip-w) - var(--nm-rail-w)));
+		transition: transform var(--nm-duration) ease 80ms;
+	}
+
+	body[data-rail="hidden"] .nm-rail > li {
+		opacity: 0;
+		transition: opacity var(--nm-duration) ease 80ms;
+	}
+
+	body[data-rail="hidden"] .nm-nav:hover .nm-rail,
+	body[data-rail="hidden"] .nm-nav:has(:focus-visible) .nm-rail,
+	body[data-rail="hidden"] .nm-nav:has(.nm-display-pop:not([hidden])) .nm-rail,
+	body[data-rail="hidden"].nm-panel-open .nm-rail {
+		transform: none;
+		box-shadow: var(--nm-shadow);
+	}
+
+	body[data-rail="hidden"] .nm-nav:hover .nm-panels,
+	body[data-rail="hidden"] .nm-nav:has(:focus-visible) .nm-panels,
+	body[data-rail="hidden"] .nm-nav:has(.nm-display-pop:not([hidden])) .nm-panels,
+	body[data-rail="hidden"].nm-panel-open .nm-panels {
+		transform: none;
+	}
+
+	/* Already pushed by the bar: no entrance effect of its own */
+	body[data-rail="hidden"] .nm-panels.nm-panels-enter {
+		animation: none;
+	}
+
+	body[data-rail="hidden"] .nm-nav:hover .nm-rail > li,
+	body[data-rail="hidden"] .nm-nav:has(:focus-visible) .nm-rail > li,
+	body[data-rail="hidden"] .nm-nav:has(.nm-display-pop:not([hidden])) .nm-rail > li,
+	body[data-rail="hidden"].nm-panel-open .nm-rail > li {
+		opacity: 1;
+	}
+
+	body[data-rail="hidden"] .nm-pin {
+		display: none !important;
+	}
+}
+
+/* Tablet: shorter top bar actions, no pin (the panel always opens over the content) */
+
+@media (max-width: 1023.98px) {
+	.nm-btn-label,
+	.nm-tag,
+	.nm-pin {
+		display: none !important;
+	}
+
+	.nm-btn-primary {
+		width: 44px;
+		justify-content: center;
+		padding: 0;
+	}
+}
+
+/* Mobile: everything in the top bar, the menu is a drawer */
+
+@media (max-width: 767.98px) {
+	.nm-topbar {
+		gap: 2px;
+		padding: 0 4px;
+	}
+
+	.nm-kbd,
+	.nm-find {
+		display: none;
+	}
+
+	.nm-find-toggle {
+		display: inline-flex !important;
+	}
+
+	body.nm-find-open .nm-find {
+		display: block;
+		position: absolute;
+		left: 8px;
+		right: 8px;
+		top: 8px;
+		margin: 0;
+		max-width: none;
+		z-index: 45;
+	}
+
+	.nm-topbar-start {
+		width: auto;
+	}
+
+	/* Secondary tools of the core (report a bug, print, help, version) do not fit */
+	body.nm-body div.login_block_other {
+		display: none !important;
+	}
+
+	.nm-actions {
+		gap: 0;
+	}
+
+	.nm-brand {
+		flex: 1;
+		max-width: none;
+		margin-left: 0;
+	}
+
+	.nm-rail-bottom {
+		display: none;
+	}
+
+	.nm-popover {
+		position: fixed;
+		left: 8px;
+		right: 8px;
+		top: calc(var(--nm-topbar-h) + 8px);
+		width: auto;
+	}
+
+	.nm-nav {
+		position: fixed;
+		left: 0;
+		top: var(--nm-topbar-h);
+		bottom: 0;
+		width: min(100%, 360px);
+		transform: translateX(-100%);
+		visibility: hidden;
+		transition: transform var(--nm-duration) ease, visibility 0s linear var(--nm-duration);
+	}
+
+	body.nm-drawer-open .nm-nav {
+		transform: none;
+		visibility: visible;
+		transition: transform var(--nm-duration) ease;
+	}
+
+	.nm-rail {
+		width: 100%;
+	}
+
+	.nm-rail-item {
+		flex-direction: row;
+		justify-content: flex-start;
+		gap: 14px;
+		min-height: 48px;
+		padding: 0 16px;
+		text-align: left;
+	}
+
+	.nm-rail-label {
+		font-size: 15px;
+	}
+
+	body.nm-panel-open .nm-rail {
+		display: none;
+	}
+
+	.nm-panels,
+	body:not(.nm-pinned) .nm-panels {
+		position: static;
+		flex: 1;
+		box-shadow: none;
+	}
+
+	.nm-panel {
+		width: 100%;
+		border-right: 0;
+	}
+
+	.nm-back {
+		display: inline-flex !important;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.nm-nav,
+	body.nm-drawer-open .nm-nav,
+	.nm-toggle .fas,
+	.nm-pin .fas,
+	.nm-find-hint .nm-kbd,
+	.nm-fav,
+	body[data-rail="hidden"] .nm-rail,
+	body[data-rail="hidden"] .nm-panels,
+	body[data-rail="hidden"] .nm-rail > li {
+		transition: none;
+	}
+
+	.nm-find-hint .nm-kbd,
+	.nm-panels.nm-panels-enter {
+		animation: none;
+	}
+}

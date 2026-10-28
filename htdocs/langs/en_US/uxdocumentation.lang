@@ -173,6 +173,18 @@ UxDolibarrContextLangsTool = Langs tool
 UxDolibarrContextKnowsHooks = Common JS Hooks list
 
 UxMenuTooltipTheme = Tooltips & themes
+UxMenuNewMenu = New menu
+UxNewMenuEnable = How to enable it
+UxNewMenuAudit = What the current menu does not cover
+UxNewMenuPrinciples = Principles
+UxNewMenuLayouts = Layouts
+UxNewMenuQuickAccess = Quick access
+UxNewMenuBadges = Badges through the JS context
+UxNewMenuWidgets = Widgets of the panels
+UxNewMenuAccessibility = Keyboard and accessibility
+UxNewMenuBuild = How the menu tree is built
+UxNewMenuLimits = Limits of the prototype
+UxNewMenuQuestions = Open questions
 TooltipThemesAndOrientation = Tooltip Themes and orientation
 
 # Start experiements menu title

@@ -228,6 +228,9 @@ class FormAdmin
 								if (preg_match('/smartphone_(backoffice|frontoffice)\.php$/i', $file)) {
 									continue; // We exclude all menu manager files
 								}
+								if ($file == 'rail_menu.php' && getDolGlobalInt('MAIN_FEATURES_LEVEL') < 2 && $file != $selected) {
+									continue; // Experimental menu manager
+								}
 
 								$filetoshow = preg_replace('/\.php$/i', '', $file);
 								$filetoshow = ucfirst(preg_replace('/_menu$/i', '', $filetoshow));
@@ -235,6 +238,8 @@ class FormAdmin
 								// 0=Recommended, 1=Experimental, 2=Development, 3=Other
 								if (preg_match('/^eldy/i', $file)) {
 									$prefix = '0';
+								} elseif ($file == 'rail_menu.php') {
+									$prefix = '1';
 								} elseif (preg_match('/^smartphone/i', $file)) {
 									$prefix = '2';
 								} else {
@@ -244,6 +249,9 @@ class FormAdmin
 								$morelabel = '';
 								if (preg_match('/^auguria/i', $file)) {
 									$morelabel .= ' <span class="opacitymedium">('.$langs->trans("Unstable").')</span>';
+								}
+								if ($file == 'rail_menu.php') {
+									$morelabel .= ' <span class="opacitymedium">('.$langs->trans("VersionExperimental").')</span>';
 								}
 								if ($file == $selected) {
 									$menuarray[$prefix.'_'.$file] = '<option value="'.$file.'" selected data-html="'.dol_escape_htmltag($filetoshow.$morelabel).'">';

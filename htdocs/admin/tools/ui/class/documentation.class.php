@@ -299,6 +299,25 @@ class Documentation
 						'Introduction' => '#ux-introduction',
 						'TooltipThemesAndOrientation' => '#tooltip-themes',),
 				),
+				'UxMenuNewMenu' => array(
+					'url' => dol_buildpath($this->baseUrl.'/experimental/menu/index.php', 1),
+					'icon' => 'fas fa-bars',
+					'submenu' => array(),
+					'summary' => array(
+						'Introduction' => '#newmenu-introduction',
+						'UxNewMenuEnable' => '#newmenu-enable',
+						'UxNewMenuAudit' => '#newmenu-audit',
+						'UxNewMenuPrinciples' => '#newmenu-decisions',
+						'UxNewMenuLayouts' => '#newmenu-layout',
+						'UxNewMenuQuickAccess' => '#newmenu-quickaccess',
+						'UxNewMenuBadges' => '#newmenu-badges',
+						'UxNewMenuWidgets' => '#newmenu-widgets',
+						'UxNewMenuAccessibility' => '#newmenu-accessibility',
+						'UxNewMenuBuild' => '#newmenu-build',
+						'UxNewMenuLimits' => '#newmenu-limits',
+						'UxNewMenuQuestions' => '#newmenu-questions',
+					),
+				),
 			)
 		);
 

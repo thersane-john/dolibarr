@@ -5930,8 +5930,15 @@ class Form
 			print '</form>';
 		} else {
 			if ($selected) {
-				$code = $langs->getLabelFromKey($this->db, $selected, 'c_shipment_mode', 'rowid', 'code');
-				print $langs->trans("SendingMethod" . strtoupper($code));
+				// Code and label in one query: getLabelFromKey() caches by table and key, not by field
+				$sql = "SELECT code, libelle as label FROM " . $this->db->prefix() . "c_shipment_mode WHERE rowid = " . ((int) $selected);
+				$resql = $this->db->query($sql);
+				$obj = $resql ? $this->db->fetch_object($resql) : null;
+				if ($obj) {
+					$key = "SendingMethod" . strtoupper($obj->code);
+					// No translation for this code (shipping method added in the dictionary): its label, like selectShippingMethod()
+					print $langs->trans($key) != $key ? $langs->trans($key) : dol_escape_htmltag($obj->label);
+				}
 			} else {
 				print "&nbsp;";
 			}
